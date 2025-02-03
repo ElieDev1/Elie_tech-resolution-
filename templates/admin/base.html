@@ -4,57 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styling for the search form */
+        .search-form {
+            display: flex;
+            align-items: center;
+            border-radius: 9999px; /* Fully rounded edges */
+            padding: 0.5rem 1rem; /* Adjusts padding inside the form */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Shadow for the form */
+            max-width: 28rem; /* Maximum width */
+            margin-top: 1rem; /* Spacing from the top */
+            margin-left: 1rem; /* Spacing from the left */
+            width: 100%; /* Full width for smaller screens */
+        }
+        .search-form input {
+            width: 100%; /* Input takes full width */
+            padding: 0.5rem; /* Padding inside the input */
+            border-radius: 9999px; /* Fully rounded edges */
+            border: 1px solid #e2e8f0; /* Light gray border */
+            outline: none; /* Removes outline */
+            font-size: 1rem; /* Font size for the input */
+            color: #2d3748; /* Text color */
+        }
+        .search-form button {
+            background-color: #4299e1; /* Blue color */
+            padding: 0.5rem; /* Padding for the button */
+            border-radius: 9999px; /* Fully rounded edges */
+            color: white; /* Text color for the button */
+            border: none; /* Removes the border */
+            cursor: pointer; /* Pointer cursor on hover */
+            transition: background-color 0.3s; /* Smooth transition for hover effect */
+        }
+        .search-form button:hover {
+            background-color: #3182ce; /* Darker blue on hover */
+        }
+        .search-form button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(66, 153, 241, 0.5); /* Focus ring */
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
 
-    <!-- Navigation Bar -->
-    <nav class="bg-gray-800 text-white p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <span class="text-xl font-bold">Admin Panel</span>
-            
-            <!-- Menu toggle for mobile -->
-            <button class="lg:hidden text-white focus:outline-none" id="menu-toggle">
-                <i class="fas fa-bars"></i>
-            </button>
+    <!-- Main Layout -->
+    <div class="flex">
 
-            <!-- Menu Links -->
-            <div class="space-x-4 hidden lg:flex">
-                <a href="{% url 'admin_dashboard' %}" class="hover:text-gray-300">Dashboard</a>
-                <a href="{% url 'admin_products' %}" class="hover:text-gray-300">Products</a>
-                <a href="{% url 'admin_orders' %}" class="hover:text-gray-300">Orders</a>
-                <a href="{% url 'admin_users' %}" class="hover:text-gray-300">Users</a>
-                <a href="{% url 'admin_messages' %}" class="hover:text-gray-300">Messages</a>
-                <a href="{% url 'admin_team' %}" class="hover:text-gray-300">Team</a>
-                <a href="{% url 'product_list' %}" class="hover:text-gray-300">customer site</a>
+        <!-- Sidebar (Reduced width) -->
+        <div class="w-48 bg-gray-800 text-white min-h-screen mt-16"> <!-- mt-16 pushes sidebar below the top nav -->
+            <div class="p-4">
+                <!-- Admin Panel Title -->
+                <span class="text-xl font-bold whitespace-nowrap">Admin Panel</span>
+            </div>
+            <div class="px-4">
+                <!-- Sidebar Links with Active Link Highlighting -->
+                <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/' %}bg-gray-700{% endif %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="{% url 'admin_products' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/products/' %}bg-gray-700{% endif %}"><i class="fas fa-box"></i> Products</a>
+                <a href="{% url 'admin_orders' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/orders/' %}bg-gray-700{% endif %}"><i class="fas fa-shopping-cart"></i> Orders</a>
+                <a href="{% url 'admin_users' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/users/' %}bg-gray-700{% endif %}"><i class="fas fa-users"></i> Users</a>
+                <a href="{% url 'admin_messages' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/messages/' %}bg-gray-700{% endif %}"><i class="fas fa-envelope"></i> Messages</a>
+                <a href="{% url 'admin_team' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/team/' %}bg-gray-700{% endif %}"><i class="fas fa-users-cog"></i> Team</a>
+                <a href="{% url 'product_list' %}" class="block py-2 px-4 text-yellow-400 hover:bg-gray-700 {% if request.path == '/products/' %}bg-gray-700{% endif %}"><i class="fas fa-store"></i> Site</a>
             </div>
         </div>
-    </nav>
 
-    <!-- Mobile Menu (Hidden by default) -->
-    <div id="mobile-menu" class="lg:hidden bg-gray-800 text-white p-4 hidden">
-        <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 hover:bg-gray-700">Dashboard</a>
-        <a href="{% url 'admin_products' %}" class="block py-2 px-4 hover:bg-gray-700">Products</a>
-        <a href="{% url 'admin_orders' %}" class="block py-2 px-4 hover:bg-gray-700">Orders</a>
-        <a href="{% url 'admin_users' %}" class="block py-2 px-4 hover:bg-gray-700">Users</a>
-        <a href="{% url 'admin_messages' %}" class="block py-2 px-4 hover:bg-gray-700">Messages</a>
-        <a href="{% url 'admin_team' %}" class="block py-2 px-4 hover:bg-gray-700">Team</a>
+        <!-- Content Area -->
+        <div class="flex-1 bg-gray-100">
+
+            <!-- Top Nav with Search Box (Full width) -->
+            <nav class="bg-gray-700 text-white p-4 w-full fixed top-0 left-0 z-50 h-16">
+                 <!-- h-16 sets fixed height for the top nav -->
+                <div class="container mx-auto flex items-center">
+
+                    
+
+                    <!-- Top Nav Links -->
+                    <div class="hidden lg:flex items-center space-x-6 ml-auto">
+                        <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/' %}bg-gray-700{% endif %}"> Dashboard</a>
+                        <a href="{% url 'admin_products' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/products/' %}bg-gray-700{% endif %}"> Products</a>
+                        <a href="{% url 'admin_orders' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/orders/' %}bg-gray-700{% endif %}"> Orders</a>
+                        <a href="{% url 'admin_users' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/users/' %}bg-gray-700{% endif %}"> Users</a>
+                        <a href="{% url 'admin_messages' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/messages/' %}bg-gray-700{% endif %}"> Messages</a>
+                        <a href="{% url 'admin_team' %}" class="block py-2 px-4 text-white hover:bg-gray-700 {% if request.path == '/admin-panel/team/' %}bg-gray-700{% endif %}"> Team</a>
+                        <a href="{% url 'product_list' %}" class="block py-2 px-4 text-yellow-400 hover:bg-gray-700 {% if request.path == '/products/' %}bg-gray-700{% endif %}"> Site</a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="container mx-auto p-4 pt-16"> 
+                <!-- Search Form -->
+                <form action="{% url 'admin_search' %}" method="GET" class="search-form">
+                    <input type="text" name="query" class="w-full p-2 rounded-full focus:outline-none focus:ring-2 text-gray-800" placeholder="What are you looking for?" required>
+                    <button type="submit" class="bg-blue-500 p-2 rounded-full text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form><!-- pt-16 ensures content starts below the top nav -->
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="container mx-auto p-4">
-        {% block content %}
-        {% endblock %}
-    </div>
-
-    <script>
-        // Toggle mobile menu visibility
-        document.getElementById('menu-toggle').addEventListener('click', function() {
-            var mobileMenu = document.getElementById('mobile-menu');
-            mobileMenu.classList.toggle('hidden');
-        });
-    </script>
-
+    <!-- jQuery (Optional) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
 </html>

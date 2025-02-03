@@ -58,22 +58,41 @@ def product_detail(request, product_id):
 
     # Return the page with product details and comments
     return render(request, 'store/product_detail.html', {'product': product})
-@csrf_exempt
+
+
 def register(request):
     if request.method == 'POST':
+        # Capture data from the form
         username = request.POST['username']
-        password = request.POST['password']
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
         email = request.POST['email']
+        password = request.POST['password']
         phone = request.POST['phone']
         address = request.POST['address']
 
-        user = User.objects.create_user(username=username, email=email, password=password)
-        Customer.objects.create(user=user, phone_number=phone, address=address)
+        # Create the user
+        user = User.objects.create_user(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=password
+        )
+        
+        # Optionally, save the phone and address in a custom model (Customer)
+        customer = Customer.objects.create(
+            user=user,
+            phone_number=phone,
+            address=address
+        )
 
-        messages.success(request, "Account created successfully!")
-        return redirect('login')
+        # Provide feedback and redirect
+        messages.success(request, 'Account created successfully!')
+        return redirect('login')  # Redirect to login page or wherever you want
 
     return render(request, 'store/register.html')
+
 
 @csrf_exempt
 def login_user(request):
@@ -764,14 +783,42 @@ def admin_edit_user(request, user_id):
         'customer_form': customer_form
     })
 
+
+
+
+@login_required
+@csrf_exempt
+def edit_profile(request):
+    customer = request.user.customer  # Get the logged-in user's associated customer profile
+
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('edit_profile')  # Redirect to the same page after successful edit
+    else:
+        form = EditProfileForm(instance=request.user)  # Pre-fill the form with current user data
+
+    return render(request, 'edit_profile.html', {'form': form, 'customer': customer})
+
+
+
+
+
 @staff_member_required
 @csrf_exempt
 def admin_delete_user(request, user_id):
-    user = get_object_or_404(User, id=user_id)
-    if request.method == 'POST':
+    try:
+        user = get_object_or_404(User, id=user_id)
+        # Optionally, perform any checks before deletion
         user.delete()
-        messages.success(request, 'User deleted successfully!')
-    return redirect('admin_users')
+        messages.success(request, "User deleted successfully.")
+    except User.DoesNotExist:
+        messages.error(request, "User not found.")
+    
+    return redirect('admin_users')  # Redirect back to the user list page
+
 
 @staff_member_required
 @csrf_exempt
@@ -823,4 +870,49 @@ def admin_view_user(request, user_id):
         'messages': messages,
         'comments': comments,
         'liked_products': liked_products
+    })
+
+
+
+
+
+def admin_search(request):
+    query = request.GET.get('query', '')
+    
+    # Search logic: You can search across multiple models
+    products = Product.objects.filter(
+        Q(name__icontains=query) | 
+        Q(description__icontains=query) | 
+        Q(category__icontains=query)
+    )
+    
+    orders = Order.objects.filter(
+        Q(customer__user__username__icontains=query) | 
+        Q(product__name__icontains=query)
+    )
+    
+    users = User.objects.filter(
+        Q(username__icontains=query) | 
+        Q(first_name__icontains=query) | 
+        Q(last_name__icontains=query)
+    )
+    
+    messages = Message.objects.filter(
+        Q(sender__username__icontains=query) | 
+        Q(recipient__username__icontains=query) | 
+        Q(content__icontains=query)
+    )
+    
+    team_members = TeamMember.objects.filter(
+        Q(name__icontains=query) | 
+        Q(role__icontains=query)
+    )
+
+    return render(request, 'admin/admin_search_results.html', {
+        'query': query,
+        'products': products,
+        'orders': orders,
+        'users': users,
+        'messages': messages,
+        'team_members': team_members,
     })

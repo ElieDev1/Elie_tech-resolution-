@@ -11,7 +11,8 @@
             <p><strong>Email:</strong> {{ customer.user.email }}</p>
             <p><strong>Phone:</strong> {{ customer.phone_number }}</p>
             <p><strong>Address:</strong> {{ customer.address }}</p>
-            <a href="#editProfileModal" class="btn btn-primary" data-bs-toggle="modal">Edit Profile</a>
+            <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+
         </div>
         
         <!-- Order History -->

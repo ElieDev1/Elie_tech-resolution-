@@ -3,33 +3,56 @@
 {% block content %}
 <div class="bg-white rounded-lg shadow-md p-6">
     <h2 class="text-2xl font-bold mb-4">User Management</h2>
-    
+
+    <!-- Error and Success Messages -->
+    <div>
+        {% for message in messages %}
+            <div class="p-4 mb-4 text-white {% if message.tags == 'error' %}bg-red-500{% else %}bg-green-500{% endif %} rounded">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+
     <div class="overflow-x-auto">
-        <table class="min-w-full">
+        <table class="min-w-full table-auto text-sm">
             <thead>
                 <tr class="bg-gray-50">
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">First Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
                 <tr class="border-t">
-                    <td class="px-6 py-4">{{ user.username }}</td>
-                    <td class="px-6 py-4">{{ user.email }}</td>
-                    <td class="px-6 py-4">{{ user.customer.phone_number }}</td>
-                    <td class="px-6 py-4">{{ user.customer.address|truncatechars:30 }}</td>
-                    <td class="px-6 py-4 space-x-2">
+                    <td class="px-4 py-4">{{ user.username }}</td>
+                    <td class="px-4 py-4">{{ user.first_name }}</td>
+                    <td class="px-4 py-4">{{ user.last_name }}</td>
+                    <td class="px-4 py-4">{{ user.email|truncatechars:15 }}</td>  <!-- Limit email length to 15 characters -->
+                    <td class="px-4 py-4">{{ user.customer.phone_number }}</td>
+                    <td class="px-4 py-4">{{ user.customer.address|truncatechars:7 }}</td>
+                    <td class="px-4 py-4">
+                        {% if user.is_active %}
+                            <span class="text-green-500">Active</span>
+                        {% else %}
+                            <span class="text-red-500">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 space-x-2">
                         <a href="{% url 'admin_edit_user' user.id %}" 
                            class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
-                            Edit
+                           <i class="fa fa-edit"></i>
                         </a>
-                        <a href="{% url 'admin_delete_user' user.id %}" 
-                           class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                            Delete
+                        <!-- Delete link with confirmation dialog -->
+                        <a href="javascript:void(0);" 
+                           class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                           onclick="confirmDelete('{{ user.username }}', '{{ user.first_name }}', '{{ user.last_name }}', '{{ user.id }}')">
+                           <i class="fa fa-trash"></i>
                         </a>
                         <a href="{% url 'admin_view_user' user.id %}" 
                            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
@@ -42,4 +65,41 @@
         </table>
     </div>
 </div>
+
+<!-- Popup Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full text-center">
+        <h3 class="text-xl font-bold mb-4" id="confirmMessage"></h3>
+        <div class="flex justify-center space-x-4">
+            <button id="confirmDeleteButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Yes, Delete</button>
+            <button onclick="closeModal()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    let userId = null;
+
+    // Function to show the modal with user's details
+    function confirmDelete(username, firstName, lastName, id) {
+        userId = id;
+        document.getElementById('confirmMessage').innerText = `Are you sure you want to delete user: ${firstName} ${lastName} (${username})?`;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    // Function to confirm deletion
+    document.getElementById('confirmDeleteButton').addEventListener('click', function() {
+        if (userId) {
+            const url = `/admin-panel/users/delete/${userId}/`;  // Direct URL for deletion
+            window.location.href = url;
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}

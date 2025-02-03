@@ -12,6 +12,7 @@ urlpatterns = [
     path('products/', views.product_list, name='product_list'),
     path('chekout/', views.checkout, name='checkout'),
     path('profile/', views.profile_view, name='profile'),
+    path('edit-profile/', views.edit_profile, name='edit_profile'),
     path('orders/', views.order_list, name='order_list'),
     path('like_product/<int:product_id>/', views.toggle_like, name='like_product'),
     path('add_comment/<int:pk>/', views.add_comment, name='add_comment'),
@@ -62,6 +63,9 @@ urlpatterns = [
     path('admin-panel/team/add/', views.add_team, name='admin_add_team'),
     path('admin-panel/team/edit/<int:pk>/', views.edit_team, name='admin_edit_team'),
     path('admin-panel/team/delete/<int:pk>/', views.delete_team, name='admin_delete_team'),
+
+
+    path('admin-panel/search/', views.admin_search, name='admin_search'),
     
    
 

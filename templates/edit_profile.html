@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Edit Profile</h2>
+
+    <!-- Success or Error Messages -->
+    {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+
+    <!-- Form to Edit Profile -->
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Left Column: User Information -->
+            <div class="col-md-6 mb-3">
+                <div class="form-group">
+                    <label for="id_username" class="font-weight-bold">Username</label>
+                    <input type="text" name="username" value="{{ form.username.value }}" class="form-control" id="id_username">
+                </div>
+                <div class="form-group">
+                    <label for="id_first_name" class="font-weight-bold">First Name</label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value }}" class="form-control" id="id_first_name">
+                </div>
+                <div class="form-group">
+                    <label for="id_last_name" class="font-weight-bold">Last Name</label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value }}" class="form-control" id="id_last_name">
+                </div>
+                <div class="form-group">
+                    <label for="id_email" class="font-weight-bold">Email</label>
+                    <input type="email" name="email" value="{{ form.email.value }}" class="form-control" id="id_email">
+                </div>
+            </div>
+
+            <!-- Right Column: Password and Customer Information -->
+            <div class="col-md-6 mb-3">
+                <div class="form-group">
+                    <label for="id_password" class="font-weight-bold">Password</label>
+                    <input type="password" name="password" class="form-control" id="id_password">
+                </div>
+                <div class="form-group">
+                    <label for="id_confirm_password" class="font-weight-bold">Confirm Password</label>
+                    <input type="password" name="confirm_password" class="form-control" id="id_confirm_password">
+                </div>
+                <div class="form-group">
+                    <label for="id_phone_number" class="font-weight-bold">Phone Number</label>
+                    <input type="text" name="phone_number" value="{{ form.phone_number.value|default:customer.phone_number }}" class="form-control" id="id_phone_number">
+                </div>
+                <div class="form-group">
+                    <label for="id_address" class="font-weight-bold">Address</label>
+                    <textarea name="address" class="form-control" rows="3" id="id_address">{{ form.address.value|default:customer.address }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="id_profile_picture" class="font-weight-bold">Profile Picture</label>
+                    {% if customer.profile_picture %}
+                        <img src="{{ customer.profile_picture.url }}" alt="Profile Picture" class="img-thumbnail mb-2" width="100">
+                    {% endif %}
+                    <input type="file" name="profile_picture" class="form-control" id="id_profile_picture">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Profile</button>
+    </form>
+</div>
+{% endblock %}
