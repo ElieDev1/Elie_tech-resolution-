@@ -5,6 +5,7 @@ from .models import *
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.db.models import Q, Count
 from collections import defaultdict
@@ -57,7 +58,7 @@ def product_detail(request, product_id):
 
     # Return the page with product details and comments
     return render(request, 'store/product_detail.html', {'product': product})
-
+@csrf_exempt
 def register(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -74,6 +75,7 @@ def register(request):
 
     return render(request, 'store/register.html')
 
+@csrf_exempt
 def login_user(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -88,6 +90,7 @@ def login_user(request):
     
     return render(request, 'store/login.html')
 
+@csrf_exempt
 def logout_user(request):
     logout(request)
     return redirect('home')
@@ -131,6 +134,7 @@ def order_list(request):
 
 # Add comment functionality
 @login_required
+@csrf_exempt
 def add_comment(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
@@ -188,7 +192,7 @@ def product_list(request):
 
     return render(request, 'store/product_list.html', context)
 
-
+@csrf_exempt
 def toggle_like(request, product_id):
     if request.user.is_authenticated:
         # Get the product
@@ -221,7 +225,7 @@ def main_image(self):
 
 
 
-
+@csrf_exempt
 def add_to_cart(request, product_id):
     # Get or initialize the cart
     cart = request.session.get('cart', {})
@@ -251,7 +255,7 @@ def add_to_cart(request, product_id):
     
     messages.success(request, f"{product.name} added to cart. Current quantity: {cart[product_key]['quantity']}")
     return redirect('product_list')  # Redirect  product list
-
+@csrf_exempt
 def remove_from_cart(request, product_id):
     cart = request.session.get('cart', {})
 
@@ -271,7 +275,7 @@ def clear_cart(request):
     messages.success(request, "Your cart has been cleared.")
     return redirect('cart_view')
 
-
+@csrf_exempt
 def increase_quantity(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
@@ -297,7 +301,7 @@ def increase_quantity(request, product_id):
     request.session.modified = True 
     return redirect('cart_view')
 
-
+@csrf_exempt
 def decrease_quantity(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
@@ -314,7 +318,7 @@ def decrease_quantity(request, product_id):
     request.session.modified = True  # Explicitly mark session as modified
     return redirect('cart_view')
 
-
+@csrf_exempt
 def cart_view(request):
     cart = request.session.get('cart', {})
 
@@ -359,6 +363,7 @@ def about_view(request):
 
 
 @login_required
+@csrf_exempt
 def checkout(request):
     # Retrieve the cart from session
     cart = request.session.get('cart', {})
@@ -429,6 +434,7 @@ def checkout(request):
 
 
 @login_required
+@csrf_exempt
 def pay_order(request, order_id):
     # Retrieve the order by ID
     order = get_object_or_404(Order, id=order_id, customer=request.user.customer)
@@ -449,6 +455,7 @@ def pay_order(request, order_id):
 
 
 @login_required
+@csrf_exempt
 def order_list(request):
     # Get the Customer instance for the logged-in user
     customer = request.user.customer
@@ -483,14 +490,11 @@ def order_list(request):
     }
     return render(request, 'store/order_list.html', context)
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Q
-from django.contrib.auth.models import User
-from .models import Message
 
 # ---------------------------------------------------------------
 # Message Page View
 # ---------------------------------------------------------------
+@csrf_exempt
 def message_page(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -517,6 +521,7 @@ def message_page(request):
 # ---------------------------------------------------------------
 # Chat with Customer View (Mark messages as read here)
 # ---------------------------------------------------------------
+@csrf_exempt
 def chat_with_customer(request, customer_id):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -554,6 +559,7 @@ def chat_with_customer(request, customer_id):
 # ---------------------------------------------------------------
 # Send Message View (Mark previous messages as read when replying)
 # ---------------------------------------------------------------
+@csrf_exempt
 def send_message(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -587,6 +593,7 @@ def send_message(request):
 # ---------------------------------------------------------------
 # Context Processor (Unread Message Count)
 # ---------------------------------------------------------------
+@csrf_exempt
 def unread_message_count(request):
     unread_count = 0
     if request.user.is_authenticated:
