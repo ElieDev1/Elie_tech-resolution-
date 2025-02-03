@@ -1,0 +1,35 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">Message Details</h2>
+    <div class="space-y-4">
+        <div>
+            <label class="font-bold">From:</label>
+            <p>{{ message.sender.username }}</p>
+        </div>
+        <div>
+            <label class="font-bold">To:</label>
+            <p>{{ message.recipient.username }}</p>
+        </div>
+        <div>
+            <label class="font-bold">Sent:</label>
+            <p>{{ message.timestamp|date:"F j, Y H:i" }}</p>
+        </div>
+        <div>
+            <label class="font-bold">Content:</label>
+            <p class="whitespace-pre-wrap">{{ message.content }}</p>
+        </div>
+        {% if message.image %}
+        <div>
+            <label class="font-bold">Attachment:</label>
+            <img src="{{ message.image.url }}" class="max-w-full h-auto rounded-lg">
+        </div>
+        {% endif %}
+        <a href="{% url 'admin_messages' %}" 
+           class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            Back to Messages
+        </a>
+    </div>
+</div>
+{% endblock %}

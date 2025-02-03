@@ -1,0 +1,15 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">{{ product.name }}</h2>
+    <img src="{{ product.main_image }}" class="w-full h-64 object-cover rounded mb-4" alt="{{ product.name }}">
+    <p><strong>Price:</strong> ${{ product.price }}</p>
+    <p><strong>Stock:</strong> {{ product.stock }}</p>
+    <p><strong>Category:</strong> {{ product.get_category_display }}</p>
+    <p class="mt-4 text-gray-700">{{ product.description }}</p>
+    <a href="{% url 'admin_products' %}" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Back to Products
+    </a>
+</div>
+{% endblock %}

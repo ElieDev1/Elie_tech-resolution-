@@ -1,0 +1,18 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">
+        {% if form.instance.pk %}Edit{% else %}Add{% endif %} Team Member
+    </h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="space-y-4">
+            {{ form.as_p }}
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Save Member
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

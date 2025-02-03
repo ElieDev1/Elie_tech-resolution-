@@ -1,0 +1,46 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Product Management</h2>
+        <a href="{% url 'admin_add_product' %}" 
+           class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Add New Product
+        </a>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {% for product in products %}
+        <div class="bg-gray-100 p-2 rounded-lg shadow flex flex-col items-center">
+            <img src="{{ product.main_image }}" 
+                 class="w-24 h-24 object-cover rounded mb-2" 
+                 alt="{{ product.name }}">
+            <h3 class="text-sm font-semibold text-center">{{ product.name }}</h3>
+            <p class="text-gray-700 text-xs">Price: ${{ product.price }}</p>
+            <p class="text-gray-700 text-xs">Stock: {{ product.stock }}</p>
+           
+            <<div class="flex space-x-2 mt-2 w-full justify-center">
+                <a href="{% url 'admin_view_product' product.id %}" 
+                   class="text-blue-500 hover:text-blue-600 text-xs flex items-center border border-blue-500 hover:border-blue-600 px-2 py-1 rounded">
+                    <i class="fa fa-eye"></i>
+                </a>
+                
+                <a href="{% url 'admin_edit_product' product.id %}" 
+                   class="text-yellow-500 hover:text-yellow-600 text-xs flex items-center border border-yellow-500 hover:border-yellow-600 px-2 py-1 rounded">
+                    <i class="fa fa-edit"></i>
+                </a>
+                
+                <a href="{% url 'admin_delete_product' product.id %}" 
+                   class="text-red-500 hover:text-red-600 text-xs flex items-center border border-red-500 hover:border-red-600 px-2 py-1 rounded">
+                    <i class="fa fa-trash"></i>
+                </a>
+            </div>
+            
+        </div>
+        {% empty %}
+        <p class="text-gray-500 col-span-full text-center">No products available.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

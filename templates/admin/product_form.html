@@ -1,0 +1,64 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-lg p-8 max-w-3xl mx-auto mt-10">
+    <h2 class="text-3xl font-semibold text-center text-gray-800 mb-8">
+        {% if form.instance.pk %}Edit{% else %}Add{% endif %} Product
+    </h2>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="space-y-6">
+            <!-- Product Name -->
+            <div class="flex flex-col">
+                <label for="id_name" class="text-sm font-medium text-gray-600">Product Name</label>
+                {{ form.name }}
+            </div>
+            
+            <!-- Product Description -->
+            <div class="flex flex-col">
+                <label for="id_description" class="text-sm font-medium text-gray-600">Product Description</label>
+                {{ form.description }}
+            </div>
+
+            <!-- Product Price -->
+            <div class="flex flex-col">
+                <label for="id_price" class="text-sm font-medium text-gray-600">Product Price</label>
+                {{ form.price }}
+            </div>
+
+            <!-- Expected Price -->
+            <div class="flex flex-col">
+                <label for="id_expected_price" class="text-sm font-medium text-gray-600">Expected Price</label>
+                {{ form.expected_price }}
+            </div>
+
+            <!-- Product Stock -->
+            <div class="flex flex-col">
+                <label for="id_stock" class="text-sm font-medium text-gray-600">Product Stock</label>
+                {{ form.stock }}
+            </div>
+
+            <!-- Category -->
+            <div class="flex flex-col">
+                <label for="id_category" class="text-sm font-medium text-gray-600">Category</label>
+                {{ form.category }}
+            </div>
+
+            <!-- Additional Images Section -->
+            <div class="flex flex-col">
+                <label for="images" class="text-sm font-medium text-gray-600">Additional Images</label>
+                <input type="file" name="images" multiple class="block w-full mt-2 text-sm text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-center">
+                <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-lg text-lg hover:bg-blue-600 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Save Product
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

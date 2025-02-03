@@ -435,27 +435,6 @@ def checkout(request):
 
 @login_required
 @csrf_exempt
-def pay_order(request, order_id):
-    # Retrieve the order by ID
-    order = get_object_or_404(Order, id=order_id, customer=request.user.customer)
-
-    # Check if the order is already paid
-    if order.payment_approved:
-        messages.info(request, "This order has already been paid for.")
-        return redirect('order_list')
-
-    # Process the payment here
-    # For simplicity, let's assume the payment is successful
-    order.payment_approved = True
-    order.save()
-
-    messages.success(request, "Payment successful!")
-    return redirect('order_list')
-
-
-
-@login_required
-@csrf_exempt
 def order_list(request):
     # Get the Customer instance for the logged-in user
     customer = request.user.customer
@@ -603,3 +582,245 @@ def unread_message_count(request):
             is_read=False
         ).count()
     return {'unread_message_count': unread_count}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from .forms import *
+@staff_member_required
+def admin_dashboard(request):
+    context = {
+        'products': Product.objects.count(),
+        'orders': Order.objects.count(),
+        'users': User.objects.count(),
+        'pending_orders': Order.objects.filter(payment_approved=False)
+    }
+    return render(request, 'admin/dashboard.html', context)
+
+@staff_member_required
+def admin_products(request):
+    products = Product.objects.all().prefetch_related('product_images')
+    return render(request, 'admin/products.html', {'products': products})
+
+@staff_member_required
+def admin_orders(request):
+    orders = Order.objects.select_related('customer__user', 'product').all()
+    return render(request, 'admin/orders.html', {'orders': orders})
+
+@staff_member_required
+def approve_payment(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.payment_approved = True
+    order.save()
+    return redirect('admin_orders')
+
+@staff_member_required
+def admin_users(request):
+    users = User.objects.select_related('customer').all()
+    return render(request, 'admin/users.html', {'users': users})
+
+@staff_member_required
+def admin_messages(request):
+    messages = Message.objects.select_related('sender', 'recipient').all()
+    return render(request, 'admin/messages.html', {'messages': messages})
+
+@staff_member_required
+def admin_team(request):
+    team = TeamMember.objects.all()
+    return render(request, 'admin/team.html', {'team': team})
+
+
+
+
+# Product Views
+@staff_member_required
+@csrf_exempt
+def add_product(request):
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save()
+            # Handle images
+            for file in request.FILES.getlist('images'):
+                ProductImage.objects.create(product=product, image=file)
+            messages.success(request, 'Product added successfully!')
+            return redirect('admin_products')
+    else:
+        form = ProductForm()
+    return render(request, 'admin/product_form.html', {'form': form})
+
+@staff_member_required
+@csrf_exempt
+def edit_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            # Handle image updates
+            if request.FILES.getlist('images'):
+                ProductImage.objects.filter(product=product).delete()
+                for file in request.FILES.getlist('images'):
+                    ProductImage.objects.create(product=product, image=file)
+            messages.success(request, 'Product updated successfully!')
+            return redirect('admin_products')
+    else:
+        form = ProductForm(instance=product)
+    return render(request, 'admin/product_form.html', {'form': form})
+
+@staff_member_required
+@csrf_exempt
+def delete_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        product.delete()
+        messages.success(request, 'Product deleted successfully!')
+    return redirect('admin_products')
+
+# Team Member Views
+@staff_member_required
+@csrf_exempt
+def add_team(request):
+    if request.method == 'POST':
+        form = TeamMemberForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Team member added successfully!')
+            return redirect('admin_team')
+    else:
+        form = TeamMemberForm()
+    return render(request, 'admin/team_form.html', {'form': form})
+
+@staff_member_required
+@csrf_exempt
+def edit_team(request, pk):
+    member = get_object_or_404(TeamMember, pk=pk)
+    if request.method == 'POST':
+        form = TeamMemberForm(request.POST, request.FILES, instance=member)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Team member updated successfully!')
+            return redirect('admin_team')
+    else:
+        form = TeamMemberForm(instance=member)
+    return render(request, 'admin/team_form.html', {'form': form})
+
+@staff_member_required
+@csrf_exempt
+def delete_team(request, pk):
+    member = get_object_or_404(TeamMember, pk=pk)
+    if request.method == 'POST':
+        member.delete()
+        messages.success(request, 'Team member deleted successfully!')
+    return redirect('admin_team')
+
+
+
+@staff_member_required
+@csrf_exempt
+def admin_users(request):
+    users = User.objects.select_related('customer').all()
+    return render(request, 'admin/users.html', {'users': users})
+
+@staff_member_required
+@csrf_exempt
+def admin_edit_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    customer, created = Customer.objects.get_or_create(user=user)
+    
+    if request.method == 'POST':
+        user_form = UserForm(request.POST, instance=user)
+        customer_form = CustomerForm(request.POST, request.FILES, instance=customer)
+        
+        if user_form.is_valid() and customer_form.is_valid():
+            user_form.save()
+            customer_form.save()
+            messages.success(request, 'User updated successfully!')
+            return redirect('admin_users')
+    else:
+        user_form = UserForm(instance=user)
+        customer_form = CustomerForm(instance=customer)
+    
+    return render(request, 'admin/edit_user.html', {
+        'user_form': user_form,
+        'customer_form': customer_form
+    })
+
+@staff_member_required
+@csrf_exempt
+def admin_delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        user.delete()
+        messages.success(request, 'User deleted successfully!')
+    return redirect('admin_users')
+
+@staff_member_required
+@csrf_exempt
+def admin_messages(request):
+    messages_list = Message.objects.select_related('sender', 'recipient').all()
+    return render(request, 'admin/messages.html', {'messages': messages_list})
+
+@staff_member_required
+@csrf_exempt
+def admin_view_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id)
+    message.is_read = True
+    message.save()
+    return render(request, 'admin/view_message.html', {'message': message})
+
+@staff_member_required
+@csrf_exempt
+def admin_delete_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id)
+    if request.method == 'POST':
+        message.delete()
+        messages.success(request, 'Message deleted successfully!')
+    return redirect('admin_messages')
+
+
+
+
+
+@staff_member_required  # Ensures only admin users can access this page
+def admin_view_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    return render(request, 'admin/view_product.html', {'product': product})
+
+
+
+
+
+
+
+def admin_view_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    orders = Order.objects.filter(customer__user=user)
+    messages = Message.objects.filter(sender=user)
+    comments = comment.objects.filter(user=user)
+    liked_products = user.liked_products.all()
+    return render(request, 'admin/view_user.html', {
+        'user': user,
+        'orders': orders,
+        'messages': messages,
+        'comments': comments,
+        'liked_products': liked_products
+    })

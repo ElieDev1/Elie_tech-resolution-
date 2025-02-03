@@ -1,0 +1,143 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white shadow-xl rounded-lg w-full max-w-7xl p-6">
+
+        <!-- User Info Header -->
+        <h2 class="text-3xl font-semibold text-center text-gray-800 mb-8">User Details: {{ user.username }}</h2>
+
+        <!-- Grid container for sections, adjusts on smaller screens -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Account Info Card (Left Side) -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="font-semibold text-xl text-gray-700 mb-4">Account Information</h3>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>first_name:</strong> {{ user.first_name }}</p>
+                <p><strong>last_name:</strong> {{ user.last_name }}</p>
+            </div>
+
+            <!-- Profile Info Card (Right Side) -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="font-semibold text-xl text-gray-700 mb-4">Profile Information</h3>
+                <p><strong>Phone Number:</strong> {{ user.customer.phone_number }}</p>
+                <p><strong>Address:</strong> {{ user.customer.address }}</p>
+                <div class="mt-4 text-center">
+                    <img src="{{ user.customer.profile_picture.url }}" alt="{{ user.username }}'s Profile Picture" class="w-24 h-24 rounded-full mx-auto border-2 border-gray-300 object-cover">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Orders and Messages Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+
+            <!-- Order History Card (Left Side) -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="font-semibold text-xl text-gray-700 mb-4">Order History</h3>
+                {% if orders %}
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        {% for order in orders %}
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <img src="{{ order.product.main_image }}" alt="{{ order.product.name }}" class="w-20 h-20 object-cover rounded mr-4">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">{{ order.product.name }}</h4>
+                                        <p class="text-gray-600">Quantity: {{ order.quantity }}</p>
+                                        <p class="text-gray-600">Price: ${{ order.total_price|floatformat:2 }}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Ordered on: {{ order.ordered_at|date:"F j, Y" }}</p>
+                                    <p class="text-sm text-gray-500">{{ order.payment_approved|yesno:"Paid,Not Paid" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No orders found for this user.</p>
+                {% endif %}
+            </div>
+
+            <!-- Messages Card (Right Side) -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="font-semibold text-xl text-gray-700 mb-4">Messages Sent</h3>
+                {% if messages %}
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        {% for message in messages %}
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    {% if message.recipient.profile_picture %}
+                                        <img src="{{ message.recipient.profile_picture.url }}" alt="{{ message.recipient.username }}" class="w-12 h-12 object-cover rounded-full mr-4">
+                                    {% else %}
+                                        <img src="https://www.w3schools.com/w3images/avatar2.png" alt="Default Avatar" class="w-12 h-12 object-cover rounded-full mr-4">
+                                    {% endif %}
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">{{ message.recipient.username }}</h4>
+                                        <p class="text-gray-600">{{ message.content|truncatewords:15 }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-500">{{ message.timestamp|date:"F j, Y, g:i a" }}</p>
+                                </div>
+                            </div>
+
+                            {% if message.image %}
+                                <img src="{{ message.image.url }}" alt="Message Image" class="w-32 h-32 object-cover rounded-lg mx-auto my-2">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No messages found for this user.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Comments Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h3 class="font-semibold text-xl text-gray-700 mb-4">Comments Made</h3>
+            {% if comments %}
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    {% for comment in comments %}
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div class="flex flex-col mb-4">
+                            <p class="font-semibold text-gray-800"><strong>Product:</strong> {{ comment.product.name }}</p>
+                            <p class="text-gray-600"><strong>Comment:</strong> {{ comment.content|truncatechars:100 }}</p>
+                            <p class="text-sm text-gray-500"><strong>Timestamp:</strong> {{ comment.timestamp|date:"F j, Y, g:i a" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No comments found for this user.</p>
+            {% endif %}
+        </div>
+
+        <!-- Liked Products Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h3 class="font-semibold text-xl text-gray-700 mb-4">Liked Products</h3>
+            {% if liked_products %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                    {% for product in liked_products %}
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <img src="{{ product.main_image }}" alt="{{ product.name }}" class="w-full h-22 object-cover rounded mb-4">
+                        <h4 class="font-semibold text-center">{{ product.name }}</h4>
+                        <p class="text-center text-gray-600">${{ product.price|floatformat:2 }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No liked products found for this user.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
