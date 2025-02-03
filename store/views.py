@@ -250,7 +250,7 @@ def add_to_cart(request, product_id):
     request.session.modified = True
     
     messages.success(request, f"{product.name} added to cart. Current quantity: {cart[product_key]['quantity']}")
-    return redirect('cart_view')  # Redirect to cart page, not product list
+    return redirect('product_list')  # Redirect  product list
 
 def remove_from_cart(request, product_id):
     cart = request.session.get('cart', {})
@@ -276,16 +276,27 @@ def increase_quantity(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
 
-    # Use string keys to match the template
     product_id_str = str(product_id)
+
+    # Check if product exists in cart
     if product_id_str in cart:
-        cart[product_id_str] += 1
+        if isinstance(cart[product_id_str], int):  
+            # Old format (e.g., cart["27"] = 2)
+            cart[product_id_str] += 1
+        elif isinstance(cart[product_id_str], dict) and 'quantity' in cart[product_id_str]:
+            # New format (e.g., cart["27"] = {"quantity": 2})
+            cart[product_id_str]['quantity'] += 1
+        else:
+            # If invalid format, reset to default structure
+            cart[product_id_str] = {"quantity": 1}
     else:
-        cart[product_id_str] = 1
+        # Add product with correct format
+        cart[product_id_str] = {"quantity": 1}
 
     request.session['cart'] = cart
-    request.session.modified = True  # Explicitly mark session as modified
+    request.session.modified = True 
     return redirect('cart_view')
+
 
 def decrease_quantity(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -305,34 +316,40 @@ def decrease_quantity(request, product_id):
 
 
 def cart_view(request):
-
     cart = request.session.get('cart', {})
 
- 
     products = []
     total_price = 0
 
     for product_id, item_data in cart.items():
-        product = Product.objects.get(id=product_id)
-        quantity = item_data['quantity']
-        subtotal = product.price * quantity
-        total_price += subtotal
+        try:
+            product = Product.objects.get(id=int(product_id))
 
-        products.append({
-            'product': product,
-            'quantity': quantity,
-            'subtotal': subtotal
-        })
+            # Ensure `item_data` is always treated as a quantity (handle both cases)
+            if isinstance(item_data, int):  # Old structure: cart["31"] = 2
+                quantity = item_data
+            elif isinstance(item_data, dict) and 'quantity' in item_data:
+                quantity = item_data['quantity']
+            else:
+                quantity = 1  # Fallback in case of bad data
+
+            subtotal = product.price * quantity
+            total_price += subtotal
+
+            products.append({
+                'product': product,
+                'quantity': quantity,
+                'subtotal': subtotal
+            })
+
+        except Product.DoesNotExist:
+            continue  # Ignore missing products
 
     return render(request, 'cart.html', {
         'cart': cart,
         'products': products,
         'total_price': total_price
     })
-
-
-
-
 
 
 def about_view(request):
