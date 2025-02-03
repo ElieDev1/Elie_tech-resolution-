@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4 text-center">{{ product.name }}</h2>
+
+    <div class="row">
+        <!-- Left Column: Main Image & Comments -->
+        <div class="col-md-5">
+            <!-- Main Image Card -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-body text-center">
+                    <img src="{{ product.main_image }}" class="img-fluid main-product-img" alt="Main Image">
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>What others say</h5>
+                </div>
+                <div class="card-body comment-list">
+                    <div class="comment-container">
+                        {% for comment in product.comment_set.all %}
+                        <div class="comment mb-3 d-flex align-items-start">
+                            <!-- Profile Picture -->
+                            {% with comment.user.customer.profile_picture.url as profile_url %}
+                            <img src="{{ profile_url }}" alt="Profile Picture" class="rounded-circle me-2" width="40" height="40">
+                            {% endwith %}
+                            
+                            <!-- Comment Content -->
+                            <div>
+                                <strong>{{ comment.user.username }}</strong>
+                                <p>{{ comment.content }}</p>
+                                <small class="text-muted">{{ comment.timestamp|date:"F j, Y, g:i a" }}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p>No comments yet. Be the first to share your thoughts!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <!-- Add Comment Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <textarea name="comment_content" class="form-control" rows="2" placeholder="Write your comment here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Post Comment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Product Details & More Images -->
+        <div class="col-md-7">
+            <!-- Product Details Card -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h4 class="price">Price: FRW {{ product.price }}</h4>
+                    <p><strong>Stock:</strong> {{ product.stock }}</p>
+                    <p class="description">
+                        <span id="short-description">{{ product.description|truncatewords:30 }}</span>
+                        <span id="full-description" style="display: none;">{{ product.description }}</span>
+                        <a href="#" id="read-more" class="text-primary">Read More</a>
+                    </p>
+                    <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success btn-lg">
+                        <i class="fa fa-cart-plus"></i> Add to Cart
+                    </a>
+
+                    <!-- Like Button and Count -->
+                    <div class="like-section mt-3">
+                        <button class="btn btn-danger" id="like-btn-{{ product.id }}" onclick="toggleLike('{{ product.id }}', true)">
+                            <i class="fa fa-heart"></i> Like
+                        </button>
+                        <span id="like-count-{{ product.id }}" class="ml-2">{{ product.likes.count }} Likes</span>
+                    </div>
+                </div>
+            </div><!-- More Images (Sliding Gallery) -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>More Images</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Sliding Product Image Carousel -->
+                    <div id="productImagesCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for image in product.product_images.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" class="d-block w-100 product-gallery-img" alt="Product Image">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productImagesCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productImagesCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#productGalleryModal">View Product Gallery</button>
+            </div>
+            
+               
+                    
+                
+            
+            
+        </div>
+    </div>
+</div>
+
+<!-- Product Gallery Modal (Popup) -->
+<div class="modal fade" id="productGalleryModal" tabindex="-1" aria-labelledby="productGalleryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productGalleryModalLabel">Product Gallery</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Product Images List -->
+                <div class="list-group">
+                    {% for image in product.product_images.all %}
+                    <div class="list-group-item">
+                        <img src="{{ image.image.url }}" class="img-fluid img-thumbnail" alt="Product Image">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Bootstrap and FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JavaScript for Read More Toggle -->
+<script>
+    document.getElementById("read-more").addEventListener("click", function(e) {
+        e.preventDefault();
+        let shortDesc = document.getElementById("short-description");
+        let fullDesc = document.getElementById("full-description");
+
+        if (shortDesc.style.display === "none") {
+            shortDesc.style.display = "inline";
+            fullDesc.style.display = "none";
+            this.textContent = "Read More";
+        } else {
+            shortDesc.style.display = "none";
+            fullDesc.style.display = "inline";
+            this.textContent = "Read Less";
+        }
+    });
+</script>
+
+<style>
+    /* Card Styling */
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    /* Main Image Styling */
+    .main-product-img {
+        max-width: 100%;
+        max-height: 350px;
+        object-fit: contain;
+        border-radius: 10px;
+    }
+
+    /* Product Gallery Images Styling */
+    .product-gallery-img {
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+    }
+
+    .product-gallery-img:hover {
+        opacity: 0.8;
+    }
+
+    /* Product Details */
+    .price {
+        font-size: 24px;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .description {
+        font-size: 16px;
+        color: #555;
+    }
+
+    /* Like Section */
+    .like-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-radius: 20px;
+        padding: 8px 15px;
+    }
+
+    /* Comments Section */
+    .comment-list {
+        max-height: 250px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .comment {
+        padding: 10px;
+        background: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+    }
+
+    .comment img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 50%;
+    }/* Custom Styling for the Sliding Image Section */
+.carousel-inner {
+    height: 500px; /* Adjust the height of the carousel */
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-item {
+    opacity: 0; /* Initially set the opacity to 0 (hidden) */
+    transition: opacity 1s ease-in-out; /* Smooth fade transition */
+    position: absolute; /* Stack images on top of each other */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Show active item */
+.carousel-item.active {
+    opacity: 1; /* Make the active image visible */
+    position: relative; /* Keep the active image in place */
+}
+
+/* Image Styling */
+.carousel-item img {
+    width: 100%;
+    height: 100%; /* Ensure the image fills the section */
+    object-fit: cover; /* Ensures the image fills the section without distortion */
+    border-radius: 10px;
+}
+
+/* Ensuring images are centered */
+.carousel-item img {
+    margin: 0 auto;
+}
+
+</style>
+<script>
+    // Ensure smooth fade transition between images
+    const carouselItems = document.querySelectorAll('.carousel-item');
+    let currentIndex = 0;
+    const totalImages = carouselItems.length;
+
+    // Function to transition between images
+    function transitionImages() {
+        // Hide current image
+        carouselItems[currentIndex].classList.remove('active');
+        carouselItems[currentIndex].style.opacity = 0;
+
+        // Move to next image
+        currentIndex = (currentIndex + 1) % totalImages;
+
+        // Show next image
+        carouselItems[currentIndex].classList.add('active');
+        carouselItems[currentIndex].style.opacity = 1;
+    }
+
+    // Set interval for automatic image transition (every 3 seconds)
+    setInterval(transitionImages, 5000);
+</script>
+
+
+{% endblock %}

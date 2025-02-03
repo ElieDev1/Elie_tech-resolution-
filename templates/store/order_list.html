@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4 text-center">Your Orders</h2>
+    
+    {% if grouped_orders %}
+        {% for group in grouped_orders %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <!-- Display the formatted order time -->
+                <h5 class="card-title">Order placed on: {{ group.group_date|date:"D, d M Y H:i" }}</h5>
+                <p class="card-text"><small class="text-muted">Time: {{ group.group_date|date:"D, d M Y H:i" }}</small></p>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Unit Price (FRW)</th>
+                                <th>Subtotal (FRW)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in group.orders %}
+                            <tr>
+                                <td>{{ order.product.name }}</td>
+                                <td>{{ order.quantity }}</td>
+                                <td>{{ order.product.price }}</td>
+                                <td>{{ order.subtotal_price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <h6>Total: <strong>FRW {{ group.total_price_for_group }}</strong></h6>
+                    
+                    {% if group.orders.0.payment_approved %}
+                    <span class="badge bg-success">Paid</span>
+                    {% else %}
+                    <span class="badge bg-warning">Pending Payment</span>
+                    <a href="{% url 'pay_order' group.orders.0.id %}" class="btn btn-primary btn-sm">Pay Now</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-center">You have no orders.</p>
+    {% endif %}
+</div>
+
+<!-- Additional Styles for Better Layout -->
+<style>
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-size: 0.9em;
+    }
+    
+    .btn-primary {
+        font-size: 0.9em;
+    }
+</style>
+
+{% endblock %}

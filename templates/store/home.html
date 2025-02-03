@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load cart_filters %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="hero-section text-center py-5 bg-light mb-4">
+        <p class="lead">Discover the latest gadgets and electronics at unbeatable prices.</p>
+    </div>
+
+    <!-- All Products Carousel -->
+    <div class="position-relative products-carousel-container">
+        <button class="btn btn-primary scroll-btn left-scroll" onclick="scrollHorizontal(-300)">
+            &lt;
+        </button>
+        <div class="products-scroll-container" id="productsContainer">
+            {% for product in all_products %}
+            <div class="product-card-wrapper">
+                <div class="card product-card h-100">
+                    <img src="{{ product.main_image }}" class="card-img-top product-img" alt="{{ product.name }}">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">{{ product.name|truncatechars:15 }}</h6>
+                        <p class="card-text price">FRW {{ product.price }}</p>
+                        <div class="button-group">
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm">
+                                <i class="fa fa-eye"></i> View
+                            </a>
+                            <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success btn-sm">
+                                <i class="fa fa-shopping-cart"></i> Order
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="btn btn-primary scroll-btn right-scroll" onclick="scrollHorizontal(300)">
+            &gt;
+        </button>
+    </div>
+
+    <!-- Categories Section -->
+    <h2 class="my-4 text-center">Shop by Category</h2>
+    <div class="row">
+        {% for value, label in categories %}
+        {% with count=product_counts|get_item:value %}
+            {% if count > 0 %}
+            <div class="col-md-2 mb-4">
+                <div class="card category-card text-center p-3">
+                    <h5>{{ label }}</h5>
+                    <small class="text-muted">{{ count }} product{{ count|pluralize }}</small>
+                    <a href="{% url 'product_list' %}?category={{ value }}" class="stretched-link"></a>
+                </div>
+            </div>
+            {% endif %}
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="get" action="{% url 'product_list' %}" class="search-form">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" placeholder="search for products" value="{{ request.GET.q }}">
+                    <button class="btn btn-primar" type="submit">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product List -->
+    <div class="row">
+        <div class="col-md-3">
+            <h5>Categories</h5>
+            <div class="category-card">
+                <ul class="list-group mb-4 category-list">
+                    <li class="list-group-item {% if not request.GET.category %}active{% endif %}">
+                        <a href="{% url 'product_list' %}" class="text-decoration-none">All Categories</a>
+                    </li>
+                    {% for value, label in categories %}
+                        <li class="list-group-item {% if request.GET.category == value %}active{% endif %}">
+                            <a href="{% url 'product_list' %}?category={{ value }}" class="text-decoration-none">{{ label }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="row">
+                {% for item in products_with_likes %}
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2-4 mb-4">
+                    <div class="card product-card h-100">
+                        {% if item.main_image %}  {# Check if the method returns a URL #}
+                            <img src="{{ item.main_image }}" class="card-img-top product-img" alt="{{ item.name }}">
+                        {% else %}
+                            <img src="/static/default_image.jpg" class="card-img-top product-img" alt="No Image Available">
+                        {% endif %}
+                        <div class="card-body text-center p-2">
+                            <h6 class="card-title mb-1">{{ item.name|truncatechars:20 }}</h6>
+                            <p class="card-text price mb-1">RWF {{ item.price }}</p>
+                            <h6 class="card-text mb-1">RWF {{ item.expected_price|truncatechars:20 }}</h6>
+                            
+                            <!-- Hidden Content -->
+                            <div class="card-hidden-content">
+                                <small class="text-muted">Stock: {{ item.stock }}</small>
+                                <div class="like-section mt-1">
+                                    <button class="btn like-btn" id="like-btn-{{ item.id }}" onclick="toggleLike('{{ item.id }}', true)">
+                                        <i class="fa-regular fa-thumbs-up"></i>
+                                    </button>
+                                    <button class="btn unlike-btn" id="unlike-btn-{{ item.id }}" onclick="toggleLike('{{ item.id }}', false)">
+                                        <i class="fa-solid fa-thumbs-down"></i>
+                                    </button>
+                                    <span id="like-count-{{ item.id }}" class="like-count">{{ item.likes_count }} like</span>
+                                </div>
+                                <div class="button-group mt-2 d-flex justify-content-between">
+                                    <a href="{% url 'product_detail' item.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
+                                        <i class="fa fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'add_to_cart' item.id %}" class="btn btn-success btn-sm flex-grow-1">
+                                        <i class="fa fa-cart-plus"></i>+
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center">
+                    <p>No products found.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: url('https://via.placeholder.com/1200x400') no-repeat center center/cover;
+        color: rgb(0, 0, 0);
+        border-radius: 10px;
+    }
+
+    /* Product Carousel */
+    .products-carousel-container {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        background: #fff;
+    }
+
+    .products-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        gap: 10px;
+        padding: 10px 0;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    .products-scroll-container::-webkit-scrollbar {
+        display: none;  /* Chrome, Safari and Opera */
+    }
+
+    /* Product Cards */
+    .product-card-wrapper {
+        flex: 0 0 160px; /* Smaller card size */
+    }
+
+    .product-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .product-card:hover {
+        transform: scale(1.03);
+    }
+
+    .product-img {
+    width: 100%;
+    height: 120px; /* Maintain fixed height */
+    object-fit: contain; /* Changed from 'cover' to 'contain' */
+    padding: 5px;
+    background: #fff;
+    border-radius: 5px 5px 0 0;
+}
+
+    /* Scroll Buttons */
+    .scroll-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        font-size: 18px;
+        background: rgba(0, 123, 255, 0.8);
+        color: white;
+        border: none;
+    }
+
+    .scroll-btn:hover {
+        background: rgba(0, 123, 255, 1);
+    }
+
+    .left-scroll {
+        left: -10px;
+    }
+
+    .right-scroll {
+        right: -10px;
+    }
+
+    /* Category Cards */
+    .category-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+        background-color: #f8f9fa;
+    }
+
+    .category-card:hover {
+        transform: scale(1.05);
+        background-color: #e9ecef;
+    }
+
+    /* Price Formatting */
+    .price {
+        font-size: 10px;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 5px; /* Adjust spacing between buttons */
+    }
+
+    .btn-sm {
+        font-size: 10px;
+    }
+
+    /* Hidden Content */
+    .card-hidden-content {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 0.5rem;
+    }
+
+    .product-card:hover .card-hidden-content {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .product-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .card-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem !important;
+    }
+
+    .card-text {
+        font-size: 10px !important;
+        margin: 0px !important;
+    }
+
+    h6.card-text {
+        text-decoration: line-through;
+    }
+</style>
+
+<script>
+    function scrollHorizontal(amount) {
+        const container = document.getElementById('productsContainer');
+        container.scrollBy({
+            left: amount,
+            behavior: 'smooth'
+        });
+    }
+
+    function toggleLike(productId, isLike) {
+        const likeCountSpan = document.getElementById('like-count-' + productId);
+
+        fetch(`/like_product/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, like: isLike })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                likeCountSpan.textContent = `${data.like_count} Like`;
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
+</script>
+{% endblock %}

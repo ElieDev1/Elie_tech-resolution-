@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load cart_filters %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4 text-center">Shopping Cart</h2>
+    
+    {% if cart %}
+    <div class="row">
+        {% for item in products %}
+        <!-- Changed col-md-6 to col-md-4 for 3 columns -->
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="row g-0">
+                    <!-- Product Image -->
+                    <div class="col-3">
+                        <img src="{{ item.product.main_image }}" class="img-fluid rounded-start cart-img" alt="{{ item.product.name }}">
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="col-9">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">{{ item.product.name|truncatechars:25 }}</h6>
+                            <p class="card-text mb-1 small">Price: <strong>FRW {{ item.product.price }}</strong></p>
+
+                            <!-- Quantity Adjustment -->
+                            <div class="d-flex align-items-center">
+                                <a href="{% url 'decrease_quantity' item.product.id %}" class="btn btn-outline-secondary btn-sm py-0">−</a>
+                                <span class="mx-2">{{ item.quantity }}</span>
+                                <a href="{% url 'increase_quantity' item.product.id %}" class="btn btn-outline-secondary btn-sm py-0">+</a>
+                            </div>
+
+                            <!-- Subtotal -->
+                            <p class="mt-1 mb-0 small">Subtotal: <strong>FRW {{ item.subtotal }}</strong></p>
+
+                            <!-- Remove Button -->
+                            <div class="mt-1">
+                                <a href="{% url 'remove_from_cart' item.product.id %}" class="btn btn-danger btn-sm py-0">Remove</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Total & Checkout -->
+    <div class="text-center mt-4">
+        <h4>Total Price: <strong>FRW {{ total_price }}</strong></h4>
+        <a href="{% url 'checkout' %}" class="btn btn-primary btn-lg mt-2">Checkout</a>
+        <a href="{% url 'clear_cart' %}" class="btn btn-warning btn-lg mt-2">Clear Cart</a>
+    </div>
+
+    {% else %}
+    <p class="text-center">Your cart is empty.</p>
+    {% endif %}
+</div>
+
+<!-- Updated Styles -->
+<style>
+    .cart-img {
+        width: 100%;
+        height: 100px;  /* Reduced height */
+        object-fit: cover;
+    }
+    .card {
+        min-width: 250px;  /* Minimum card width */
+    }
+    .card-title {
+        font-size: 1rem;
+    }
+    .card-text {
+        font-size: 0.9rem;
+    }
+</style>
+
+{% endblock %}
