@@ -7,9 +7,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from django.db.models import Q, Count
-
+from django.db.models import Q, Count,Sum
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
+import json
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 from .forms import *
 
@@ -330,6 +333,7 @@ def increase_quantity(request, product_id):
     request.session.modified = True 
     return redirect('cart_view')
 
+
 @csrf_exempt
 def decrease_quantity(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -337,14 +341,25 @@ def decrease_quantity(request, product_id):
 
     # Use string keys to match the template
     product_id_str = str(product_id)
+
     if product_id_str in cart:
-        if cart[product_id_str] > 1:
-            cart[product_id_str] -= 1
+        # Check if the cart stores quantities directly or in a dictionary format
+        if isinstance(cart[product_id_str], dict):
+            quantity = cart[product_id_str].get("quantity", 1)
+        else:
+            quantity = cart[product_id_str]
+
+        if quantity > 1:
+            if isinstance(cart[product_id_str], dict):
+                cart[product_id_str]["quantity"] -= 1  # Decrease quantity in dictionary
+            else:
+                cart[product_id_str] -= 1  # Decrease quantity directly
         else:
             del cart[product_id_str]  # Remove product if quantity is 1
 
     request.session['cart'] = cart
     request.session.modified = True  # Explicitly mark session as modified
+
     return redirect('cart_view')
 
 @csrf_exempt
@@ -631,27 +646,12 @@ def unread_message_count(request):
 
 
 
-from django.contrib.admin.views.decorators import staff_member_required
-from django.utils import timezone
-
-@staff_member_required
-def admin_dashboard(request):
-    context = {
-        'products': Product.objects.count(),
-        'orders': Order.objects.count(),
-        'order_items': OrderItem.objects.count(),  # Fixed typo in context key
-        'users': User.objects.count(),
-        'pending_orders': Order.objects.filter(payment_status='Pending')  # Updated to use payment_status
-    }
-    return render(request, 'admin/dashboard.html', context)
-
-
 @staff_member_required
 def admin_products(request):
     products = Product.objects.all().prefetch_related('product_images')
     return render(request, 'admin/products.html', {'products': products})
 
-from django.contrib.admin.views.decorators import staff_member_required
+
 
 
 
@@ -1149,18 +1149,91 @@ def delete_order(request, order_id):
 
 
 
+def admin_dashboard(request):
+    # Key Metrics
+    total_customers = Customer.objects.count()
+    total_orders = Order.objects.count()
+    total_revenue = Order.objects.filter(payment_status='Confirmed').aggregate(Sum('total_price'))['total_price__sum'] or 0
+    total_products = Product.objects.count()
+    total_comments = Comment.objects.count()
+    unread_messages = Message.objects.filter(is_read=False).count()
 
+    # Aggregating orders by delivery_status and payment_status separately
+    orders_by_status = list(Order.objects.values('delivery_status', 'payment_status')
+                            .annotate(count=Count('id')))
 
+    # Adjusting the aggregation to group the counts of both Pending and Confirmed payments for each delivery_status
+    delivery_status_counts = {}
+    for order in orders_by_status:
+        delivery_status = order['delivery_status']
+        payment_status = order['payment_status']
+        if delivery_status not in delivery_status_counts:
+            delivery_status_counts[delivery_status] = {'Pending': 0, 'Confirmed': 0}
+        
+        if payment_status == 'Pending':
+            delivery_status_counts[delivery_status]['Pending'] += order['count']
+        elif payment_status == 'Confirmed':
+            delivery_status_counts[delivery_status]['Confirmed'] += order['count']
 
+    # Now we can prepare the data to display
+    orders_by_status_cleaned = [
+        {
+            'delivery_status': delivery_status,
+            'pending_count': counts['Pending'],
+            'confirmed_count': counts['Confirmed']
+        }
+        for delivery_status, counts in delivery_status_counts.items()
+    ]
+    
+    # Aggregating revenue by category - joining OrderItem model
+    revenue_by_category = list(Product.objects
+        .values('category')
+        .annotate(total_sales=Sum('orderitem__subtotal'))
+        .filter(orderitem__order__payment_status='Confirmed'))  # Ensure we're only considering confirmed orders
 
+    # Convert Decimal values to float
+    revenue_by_category = [
+        {**item, 'total_sales': float(item['total_sales']) if item['total_sales'] else 0}
+        for item in revenue_by_category
+    ]
 
+    # Serialize the data to JSON format
+    orders_by_status_json = json.dumps(orders_by_status_cleaned)
+    revenue_by_category_json = json.dumps(revenue_by_category)
 
+    # Add more data for the template if needed
+    top_selling_products = Product.objects.annotate(
+        total_sold=Sum('orderitem__quantity')
+    ).order_by('-total_sold')[:5]
 
+    most_liked_products = Product.objects.annotate(
+        like_count=Count('likes')
+    ).order_by('-like_count')[:5]
 
+    top_customers = Customer.objects.annotate(
+        total_spent=Sum('order__total_price')
+    ).order_by('-total_spent')[:5]
 
+    new_customers = Customer.objects.filter(
+        user__date_joined__gte=datetime.today() - timedelta(days=30)
+    ).order_by('-user__date_joined')[:5]
 
+    low_stock_products = Product.objects.filter(stock__lt=10)
 
+    context = {
+        'total_customers': total_customers,
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'total_products': total_products,
+        'total_comments': total_comments,
+        'unread_messages': unread_messages,
+        'orders_by_status': orders_by_status_json,
+        'revenue_by_category': revenue_by_category_json,
+        'top_selling_products': top_selling_products,
+        'most_liked_products': most_liked_products,
+        'top_customers': top_customers,
+        'new_customers': new_customers,
+        'low_stock_products': low_stock_products,
+    }
 
-
-
-
+    return render(request, 'admin/dashboard.html', context)
