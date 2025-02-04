@@ -1,0 +1,14 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4">View Comment</h2>
+    <p class="text-gray-600">User: <span class="font-semibold">{{ comment.user.username }}</span></p>
+    <p class="text-gray-600">Product: <span class="font-semibold">{{ comment.product.name }}</span></p>
+    <p class="text-gray-800 mt-2">{{ comment.content }}</p>
+    <p class="text-xs text-gray-500 mt-2">Posted on: {{ comment.timestamp|date:"M d, Y H:i" }}</p>
+    <a href="{% url 'admin_comment_list' %}" class="mt-4 inline-block bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-600">
+        Back to Comments
+    </a>
+</div>
+{% endblock %}

@@ -1,59 +1,85 @@
 {% extends 'admin/base.html' %}
 
 {% block content %}
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold mb-4">Order Management</h2>
+    <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
+        <h2 class="text-3xl font-bold mb-6 text-gray-800">Order Management</h2>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {% for order in orders %}
-                <div class="bg-gray-50 p-4 rounded-lg shadow-md">
+                <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-400">
                     <div class="flex justify-between items-center mb-4">
-                        <div class="font-semibold text-lg">
-                            Order #{{ order.id }}
+                        <div class="font-semibold text-xl text-gray-800">
+                            🛒 Order #{{ order.id }}
                         </div>
-                        <div class="text-sm text-gray-500">
-                            Customer: {{ order.customer.user.username }}
+                        <div class="text-sm text-gray-600">
+                            👤 Customer: <span class="font-semibold">{{ order.customer.user.username }}</span>
                         </div>
                     </div>
 
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         <div>
-                            <strong>Products:</strong>
-                            <div>
+                            <strong class="text-gray-700">📦 Products:</strong>
+                            <ul class="list-disc pl-5 text-gray-800">
                                 {% for item in order.order_items.all %}
-                                    <div>{{ item.product.name }} - {{ item.quantity }} units</div>
+                                    <li>{{ item.product.name }} - <span class="font-semibold">{{ item.quantity }}</span> units</li>
                                 {% endfor %}
-                            </div>
+                            </ul>
                         </div>
 
                         <div>
-                            <strong>Payment Status:</strong>
-                            {% if order.payment_status == 'Confirmed' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Confirmed</span>
+                            <strong class="text-gray-700">💳 Payment Status:</strong>
+                            {% if order.payment_status == 'Confirmed' %} 
+                                <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-200 text-green-800">
+                                    ✅ Confirmed
+                                </span>
                             {% else %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Pending</span>
+                                <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-red-200 text-red-800">
+                                    ⚠️ Pending
+                                </span>
+                            {% endif %}
+                            <strong>{{ order.total_price }} RWF</strong>
+                            
+                        </div>
+                        <div class="bg-white shadow-md rounded-lg p-4 border border-gray-300">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">💰 Payment Proof:</h3>
+                        
+                            <div class="flex flex-wrap gap-3">
+                                {% if order.payment_message %}
+                                    <button 
+                                        class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition duration-300 ease-in-out"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#paymentMessageModal-{{ order.id }}">
+                                        📩 View Payment Message
+                                    </button>
+                                {% endif %}
+                        
+                                {% if order.payment_image %}
+                                    <button 
+                                        class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition duration-300 ease-in-out"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#paymentImageModal-{{ order.id }}">
+                                        🖼️ View Payment Image
+                                    </button>
+                                {% endif %}
+                            </div>
+                        
+                            {% if not order.payment_message and not order.payment_image %}
+                                <p class="text-gray-600 italic mt-2">⚠️ No payment proof provided.</p>
                             {% endif %}
                         </div>
+                        
+                    </div>
 
-                        <div>
-                            <strong>Payment Details:</strong>
-                            {% if order.payment_message %}
-                                <button class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600" data-bs-toggle="modal" data-bs-target="#paymentMessageModal-{{ order.id }}">View Payment Message</button>
-                            {% endif %}
-                            {% if order.payment_image %}
-                                <button class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600" data-bs-toggle="modal" data-bs-target="#paymentImageModal-{{ order.id }}">View Payment Image</button>
-                            {% endif %}
+                    {% if order.payment_status == 'Pending' %}
+                        <div class="mt-4">
+                            <form method="post" action="{% url 'approve_payment' order.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-300">
+                                    ✅ Approve Payment
+                                </button>
+                            </form>
                         </div>
-                    </div>
-
-                    <div class="mt-4">
-                        {% if order.payment_status == 'Pending' %}
-                        <form method="post" action="{% url 'approve_payment' order.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Approve Payment</button>
-                        </form>
-                        {% endif %}
-                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Payment Message Modal -->
@@ -62,11 +88,13 @@
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="paymentMessageModalLabel-{{ order.id }}">Payment Message for Order #{{ order.id }}</h5>
+                                <h5 class="modal-title text-gray-800" id="paymentMessageModalLabel-{{ order.id }}">
+                                    💬 Payment Message for Order #{{ order.id }}
+                                </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <p>{{ order.payment_message }}</p>
+                                <p class="text-gray-700">{{ order.payment_message }}</p>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -82,11 +110,13 @@
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="paymentImageModalLabel-{{ order.id }}">Payment Image for Order #{{ order.id }}</h5>
+                                <h5 class="modal-title text-gray-800" id="paymentImageModalLabel-{{ order.id }}">
+                                    🖼️ Payment Image for Order #{{ order.id }}
+                                </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-full">
+                                <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-full rounded-lg shadow-lg">
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

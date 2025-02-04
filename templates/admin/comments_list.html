@@ -1,0 +1,38 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4">Comments Management</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for comment in comments %}
+        <div class="bg-gray-100 p-4 rounded-lg shadow">
+            <div>
+                <p class="text-sm text-gray-600">User: <span class="font-semibold">{{ comment.user.username }}</span></p>
+                <p class="text-sm text-gray-600">Product: <span class="font-semibold">{{ comment.product.name }}</span></p>
+                <p class="text-gray-800 mt-2">{{ comment.content|truncatechars:50 }}</p>
+                <p class="text-xs text-gray-500 mt-2">{{ comment.timestamp|date:"M d, Y H:i" }}</p>
+            </div>
+            <div class="flex space-x-2 mt-2">
+                <a href="{% url 'admin_view_comment' comment.id %}" 
+                   class="bg-blue-300 text-black px-3 py-1 rounded hover:bg-blue-600 text-sm">
+                    View
+                </a>
+                <a href="{% url 'admin_edit_comment' comment.id %}" 
+                   class="bg-yellow-300 text-black px-3 py-1 rounded hover:bg-yellow-600 text-sm">
+                    Edit
+                </a>
+                <form method="POST" action="{% url 'admin_delete_comment' comment.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-300 text-black px-3 py-1 rounded hover:bg-red-600 text-sm">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500">No comments available.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

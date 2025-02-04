@@ -8,9 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.db.models import Q, Count
-from collections import defaultdict
+
 from django.core.paginator import Paginator
-from decimal import Decimal
+
 from .forms import *
 
 
@@ -50,7 +50,7 @@ def product_detail(request, product_id):
         if comment_content:
             customer = get_object_or_404(Customer, user=request.user)
             # Create and save the comment
-            comment.objects.create(
+            Comment.objects.create(
                 user=request.user,  # The user posting the comment
                 product=product,
                 content=comment_content
@@ -172,7 +172,7 @@ def add_comment(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         content = request.POST.get('content')
-        comment.objects.create(user=request.user, product=product, content=content)
+        Comment.objects.create(user=request.user, product=product, content=content)
     return redirect('product_detail', pk=pk)
 
 
@@ -853,17 +853,19 @@ def admin_view_message(request, message_id):
     message.save()
     return render(request, 'admin/view_message.html', {'message': message})
 
+from django.http import HttpResponseForbidden
+
+
 @staff_member_required
 @csrf_exempt
 def admin_delete_message(request, message_id):
     message = get_object_or_404(Message, id=message_id)
+    
     if request.method == 'POST':
         message.delete()
-        messages.success(request, 'Message deleted successfully!')
-    return redirect('admin_messages')
+        return redirect('admin_messages')  # Redirect to the list of messages (update this URL)
 
-
-
+    return HttpResponseForbidden("Invalid request method.")  # Return an error for GET requests
 
 
 @staff_member_required  # Ensures only admin users can access this page
@@ -881,7 +883,7 @@ def admin_view_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     orders = Order.objects.filter(customer__user=user)
     messages = Message.objects.filter(sender=user)
-    comments = comment.objects.filter(user=user)
+    comments = Comment.objects.filter(user=user)
     liked_products = user.liked_products.all()
     return render(request, 'admin/view_user.html', {
         'user': user,
@@ -1045,6 +1047,39 @@ def approve_payment(request, order_id):
 
 
 
+from django.contrib.admin.views.decorators import staff_member_required
+
+
+@staff_member_required
+def admin_comment_list(request):
+    comments = Comment.objects.all().order_by('-timestamp')  # Use Comment, not comment
+    return render(request, 'admin/comments_list.html', {'comments': comments})
+
+@staff_member_required
+def admin_view_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)  # Use Comment, not comment
+    return render(request, 'admin/view_comment.html', {'comment': comment})
+
+@staff_member_required
+@csrf_exempt
+def admin_edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)  # Use Comment, not comment
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            comment.content = content
+            comment.save()
+            return redirect('admin_comment_list')
+    return render(request, 'admin/edit_comment.html', {'comment': comment})
+
+@staff_member_required
+@csrf_exempt
+def admin_delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)  # Use Comment, not comment
+    if request.method == 'POST':
+        comment.delete()
+        return redirect('admin_comment_list')
+    return HttpResponseForbidden("Invalid request method.")
 
 
 

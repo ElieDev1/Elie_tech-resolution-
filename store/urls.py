@@ -75,6 +75,11 @@ urlpatterns = [
 
 
     path('admin-panel/search/', views.admin_search, name='admin_search'),
+
+    path('admin-panel/comments/', views.admin_comment_list, name='admin_comment_list'),
+    path('admin-panel/comments/view/<int:comment_id>/', views.admin_view_comment, name='admin_view_comment'),
+    path('admin-panel/comments/edit/<int:comment_id>/', views.admin_edit_comment, name='admin_edit_comment'),
+    path('admin-panel/comments/delete/<int:comment_id>/', views.admin_delete_comment, name='admin_delete_comment'),
     
    
 

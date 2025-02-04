@@ -103,7 +103,7 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender} to {self.recipient}"
 
-class comment(models.Model):
+class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     content = models.TextField()
