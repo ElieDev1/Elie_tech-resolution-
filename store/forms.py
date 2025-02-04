@@ -104,3 +104,14 @@ class EditProfileForm(UserChangeForm):
         customer.save()
 
         return user
+    
+    
+
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['payment_message', 'payment_image']
+
+    payment_message = forms.CharField(widget=forms.Textarea(attrs={'placeholder': '*165*S*12400 RWF transferred to ELIE......'}), required=False)
+    payment_image = forms.ImageField(required=False)

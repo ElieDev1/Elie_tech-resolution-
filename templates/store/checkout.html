@@ -1,55 +1,43 @@
 {% extends 'base.html' %}
-{% load cart_filters %}
+
+{% block title %}Checkout{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h2 class="my-4 text-center">Checkout</h2>
+<div class="container mt-5">
+    <h2 class="mb-4">Checkout</h2>
 
-    <div class="card p-4 shadow">
-        <h4 class="mb-3">Order Summary</h4>
+    <div class="row">
+        <!-- Order Summary -->
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for item in cart_items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ item.product.name }}</strong> <br>
+                                <small>Unit Price: ${{ item.unit_price }} | Qty: {{ item.quantity }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">${{ item.subtotal }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
 
-        {% for product in products %}
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-            <div>
-                <h6>{{ product.product.name }}</h6>
-                <p class="mb-0">Quantity: {{ product.quantity }}</p>
-            </div>
-            <span>FRW {{ product.subtotal }}</span>
-        </div>
-        {% endfor %}
-
-        <h4 class="text-right mt-3">Total: FRW {{ total_price }}</h4>
-
-        <form method="post" class="mt-4">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success btn-lg btn-block">Confirm Order</button>
-        </form>
-    </div>
-</div>
-
-<!-- Order Confirmation Modal -->
-{% if messages %}
-<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="orderModalLabel">Order Initiated</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Your order has been initiated successfully. You will receive a confirmation once the payment is processed.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <hr>
+                    <h5 class="text-end">Total: <strong>${{ total_price }}</strong></h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'process_checkout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-10">Confirm Order</button>
+                    </form>
+                </div>
+                
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    // Trigger the modal if a message exists
-    var orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
-    orderModal.show();
-</script>
-{% endif %}
-
 {% endblock %}

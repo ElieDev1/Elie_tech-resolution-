@@ -11,6 +11,7 @@ from django.db.models import Q, Count
 from collections import defaultdict
 from django.core.paginator import Paginator
 from decimal import Decimal
+from .forms import *
 
 
 
@@ -129,26 +130,39 @@ def profile_view(request):
 
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import Order, Customer
 
-
+@login_required
 def order_list(request):
-    # Retrieve all orders for the logged-in user
-    orders = Order.objects.filter(customer=request.user.customer).order_by('ordered_at')
+    try:
+        # Get customer profile with related user data
+        customer = request.user.customer
+    except Customer.DoesNotExist:
+        return redirect('profile_creation')  # Redirect to profile setup if missing
 
-    # Group orders by rounded ordered_at time (e.g., rounded to the nearest minute)
-    grouped_orders = {}
+    # Fetch orders with optimized database queries
+    orders = Order.objects.filter(customer=customer).select_related(
+        'customer__user'
+    ).prefetch_related(
+        'order_items__product__product_images'
+    ).order_by('-ordered_at')
+
+    # Get choices from the model
+    payment_status_choices = dict(Order._meta.get_field('payment_status').choices)
+    delivery_status_choices = dict(Order._meta.get_field('delivery_status').choices)
+
+    # Add human-readable statuses to orders
     for order in orders:
-        # Round the ordered_at timestamp to the nearest minute (you can adjust as needed)
-        order_time = order.ordered_at.replace(second=0, microsecond=0)
+        order.payment_status_display = payment_status_choices.get(order.payment_status, "Unknown")
+        order.delivery_status_display = delivery_status_choices.get(order.delivery_status, "Unknown")
 
-        if order_time not in grouped_orders:
-            grouped_orders[order_time] = []
-        grouped_orders[order_time].append(order)
-
-    # Pass the grouped orders to the template
-    return render(request, 'orders.html', {'grouped_orders': grouped_orders})
-
-
+    return render(request, 'store/order_list.html', {
+        'orders': orders,
+        'payment_status_choices': payment_status_choices,
+        'delivery_status_choices': delivery_status_choices
+    })
 
 
 # Add comment functionality
@@ -243,37 +257,33 @@ def main_image(self):
     return "/static/images/default.jpg"  # Fallback in case no image is available
 
 
-
 @csrf_exempt
 def add_to_cart(request, product_id):
-    # Get or initialize the cart
     cart = request.session.get('cart', {})
-    
-    # Get the product with safety checks
+
     product = get_object_or_404(Product, id=product_id)
-    
-    # Validate stock availability
+
     if product.stock < 1:
         messages.error(request, "This product is out of stock!")
         return redirect('product_list')
-    
-    # Update cart quantity
+
     product_key = str(product_id)
     if product_key in cart:
-        # Check if adding exceeds stock
         if cart[product_key]['quantity'] >= product.stock:
             messages.warning(request, f"Only {product.stock} units of {product.name} are available!")
             return redirect('cart_view')
         cart[product_key]['quantity'] += 1
     else:
-        cart[product_key] = {'quantity': 1}
-    
-    # Persist cart in session
+        cart[product_key] = {'quantity': 1, 'price': float(product.price)}  # Store price
+
     request.session['cart'] = cart
     request.session.modified = True
-    
+
     messages.success(request, f"{product.name} added to cart. Current quantity: {cart[product_key]['quantity']}")
-    return redirect('product_list')  # Redirect  product list
+    return redirect('product_list')
+
+
+
 @csrf_exempt
 def remove_from_cart(request, product_id):
     cart = request.session.get('cart', {})
@@ -381,112 +391,111 @@ def about_view(request):
 
 
 
-@login_required
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @csrf_exempt
 def checkout(request):
-    # Retrieve the cart from session
     cart = request.session.get('cart', {})
-    if not cart:
-        messages.error(request, "Your cart is empty!")
-        return redirect('cart')  # Redirect to cart page
 
-    # Initialize product details and total price
-    products = []
-    total_price = Decimal(0)
+    cart_items = []
+    total_price = 0
 
-    # Ensure that cart is a dictionary and iterate through it
-    if isinstance(cart, dict):
-        for product_id, item in cart.items():
-            try:
-                # Ensure 'item' is a dictionary and contains the 'quantity' key
-                if isinstance(item, dict) and 'quantity' in item:
-                    product = Product.objects.get(id=product_id)
-                    subtotal = product.price * item['quantity']
-                    products.append({
-                        'product': product,
-                        'quantity': item['quantity'],
-                        'subtotal': subtotal
-                    })
-                    total_price += subtotal
-                else:
-                    messages.error(request, f"Invalid cart item format for product ID {product_id}.")
-                    continue  # Skip this item if it's not in the correct format
-            except Product.DoesNotExist:
-                messages.error(request, f"Product with ID {product_id} does not exist.")
-                continue
-    else:
-        # Reset the cart if not a valid dictionary
-        request.session['cart'] = {}
-        messages.error(request, "Something went wrong with your cart.")
-        return redirect('cart')
+    for product_id, item_data in cart.items():
+        try:
+            product = Product.objects.get(id=int(product_id))
 
-    # Handle POST request when user confirms the order
-    if request.method == 'POST':
-        customer = Customer.objects.get(user=request.user)
-        
-        # Create an order for each product in the cart
-        for product_id, item in cart.items():
-            if isinstance(item, dict) and 'quantity' in item:
-                try:
-                    product = Product.objects.get(id=product_id)  # Access product using the correct ID
-                    total_price = product.price * item['quantity']
-                    
-                    order = Order.objects.create(
-                        customer=customer,
-                        product=product,
-                        quantity=item['quantity'],
-                        total_price=total_price,
-                        payment_approved=False,  # Set to False until payment is confirmed
-                    )
-                except Product.DoesNotExist:
-                    messages.error(request, f"Product with ID {product_id} does not exist.")
-                    continue  # Skip this product if it does not exist
+            quantity = item_data['quantity'] if isinstance(item_data, dict) and 'quantity' in item_data else 1
+            unit_price = product.price  # ✅ Store unit price
+            subtotal = unit_price * quantity  # ✅ Calculate subtotal
+            total_price += subtotal  # ✅ Add to total price
 
-        # Empty the cart after checkout
-        request.session['cart'] = {}
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'unit_price': unit_price,  # ✅ Add unit price
+                'subtotal': subtotal  # ✅ Add subtotal
+            })
 
-        messages.success(request, "Your order has been placed successfully. We will notify you once the payment is processed.")
-        return redirect('order_list')  # Redirect to the order list page or any success page
+        except Product.DoesNotExist:
+            continue  # Ignore missing products
 
-    return render(request, 'store/checkout.html', {'products': products, 'total_price': total_price})
+    return render(request, 'store/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
 
 
 
 @login_required
 @csrf_exempt
-def order_list(request):
-    # Get the Customer instance for the logged-in user
-    customer = request.user.customer
+def process_checkout(request):
+    cart = request.session.get('cart', {})
+    total_price = 0
 
-    # Get all orders for the current user (via the Customer instance)
-    orders = Order.objects.filter(customer=customer)
+    # Create a new order
+    order = Order.objects.create(customer=request.user.customer, total_price=total_price)
 
-    # Group orders by their 'ordered_at' timestamp (date only for simplicity)
-    grouped_orders = defaultdict(list)
-    for order in orders:
-        # Group by the formatted date (you can use strftime for more control)
-        grouped_orders[order.ordered_at.strftime("%Y-%m-%d %H:%M:%S")].append(order)
+    for product_id, item_data in cart.items():
+        try:
+            product = Product.objects.get(id=int(product_id))
+            quantity = item_data['quantity']
+            subtotal = product.price * quantity
+            total_price += subtotal
 
-    # Calculate the total price for each group and each order's subtotal
-    order_groups = []
-    for group_date, orders_in_group in grouped_orders.items():
-        total_price_for_group = 0
-        for order in orders_in_group:
-            # Calculate subtotal (unit price * quantity)
-            order.subtotal_price = order.product.price * order.quantity
-            total_price_for_group += order.subtotal_price
-        
-        # Add the total price for the group to the context for rendering in the template
-        order_groups.append({
-            'group_date': group_date,
-            'orders': orders_in_group,
-            'total_price_for_group': total_price_for_group
-        })
+            # Create OrderItem and add it to the order
+            OrderItem.objects.create(order=order, product=product, quantity=quantity, subtotal=subtotal)
 
-    context = {
-        'grouped_orders': order_groups,
-    }
-    return render(request, 'store/order_list.html', context)
+        except Product.DoesNotExist:
+            continue  # Skip missing products
+
+    # Update the total price after adding all items
+    order.total_price = total_price
+    order.save()
+
+    # Clear the cart after the order is created
+    request.session['cart'] = {}
+    request.session.modified = True
+
+    # Redirect to the order details page
+    return redirect('order_detail', order_id=order.id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ---------------------------------------------------------------
@@ -623,33 +632,43 @@ def unread_message_count(request):
 
 
 from django.contrib.admin.views.decorators import staff_member_required
-from .forms import *
+
 @staff_member_required
 def admin_dashboard(request):
     context = {
         'products': Product.objects.count(),
         'orders': Order.objects.count(),
+        'order_items': OrderItem.objects.count(),  # Fixed typo in context key
         'users': User.objects.count(),
-        'pending_orders': Order.objects.filter(payment_approved=False)
+        'pending_orders': Order.objects.filter(payment_status='Pending')  # Updated to use payment_status
     }
     return render(request, 'admin/dashboard.html', context)
+
 
 @staff_member_required
 def admin_products(request):
     products = Product.objects.all().prefetch_related('product_images')
     return render(request, 'admin/products.html', {'products': products})
 
-@staff_member_required
-def admin_orders(request):
-    orders = Order.objects.select_related('customer__user', 'product').all()
-    return render(request, 'admin/orders.html', {'orders': orders})
+from django.contrib.admin.views.decorators import staff_member_required
+
+from django.contrib.admin.views.decorators import staff_member_required
 
 @staff_member_required
-def approve_payment(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    order.payment_approved = True
-    order.save()
-    return redirect('admin_orders')
+def admin_orders(request):
+    # Use prefetch_related to fetch related products via OrderItem
+    orders = Order.objects.prefetch_related(
+        'order_items__product'  # Prefetch related products through the order_items relation
+    ).select_related(
+        'customer__user'  # Select related customer and user data
+    ).order_by('-ordered_at')  # Order by the ordered_at field in descending order (newest first)
+
+    return render(request, 'admin/orders.html', {'orders': orders})
+
+
+
+
+
 
 @staff_member_required
 def admin_users(request):
@@ -916,3 +935,149 @@ def admin_search(request):
         'messages': messages,
         'team_members': team_members,
     })
+
+
+
+
+
+
+@login_required
+@csrf_exempt
+def payment_method(request, order_id):
+    # Fetch the order by order_id
+    order = get_object_or_404(Order, id=order_id)
+    
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            # Save payment details in order
+            order.payment_message = form.cleaned_data['payment_message']
+            order.payment_image = form.cleaned_data.get('payment_image')
+            
+            # Check if payment message or image is provided before setting payment status
+            if order.payment_message or order.payment_image:
+                order.payment_status = 'Pending'  # Only set to "Pending" if either message or image is provided
+            else:
+                order.payment_status = 'Not Provided'  # You can set this to any status you prefer if no payment info is provided
+            order.save()
+
+            # Set success message
+            messages.success(request, f"Thank you {order.customer.user.username} for buying with us 🎉. Your payment is being processed. If approved, you will see a message. Thank you!")
+            
+            # Redirect to the order detail page
+            return redirect('order_detail', order_id=order.id)
+    
+    else:
+        form = PaymentForm()
+
+    return render(request, 'store/payment_method.html', {'order': order, 'form': form})
+
+
+
+
+
+@login_required
+def order_detail(request, order_id):
+    # Fetch the order by order_id and ensure it exists
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Get the associated order items
+    order_items = order.order_items.all()
+    
+    # Pass the order, order_items, and payment status to the template
+    return render(request, 'store/order_detail.html', {
+        'order': order,
+        'order_items': order_items,
+        'payment_status': order.payment_status,  # Pass payment status to the template
+        'delivery_status': order.delivery_status,  # Pass delivery status to the template
+    })
+
+
+
+
+
+
+
+
+
+@login_required
+@csrf_exempt
+def payment_method(request, order_id):
+    # Fetch the order by order_id
+    order = get_object_or_404(Order, id=order_id)
+
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            # Save payment details in the order
+            order.payment_message = form.cleaned_data['payment_message']
+            order.payment_image = form.cleaned_data.get('payment_image')
+            
+            # Set payment status to 'Pending' when details are submitted
+            order.payment_status = 'Pending'
+            order.save()
+
+            # Set a success message
+            messages.success(request, "Thank you for submitting your payment. Your payment is being processed. If approved, you'll receive a confirmation.")
+
+            # Redirect to the order detail page
+            return redirect('order_detail', order_id=order.id)
+
+    else:
+        form = PaymentForm()
+
+    return render(request, 'store/payment_method.html', {'order': order, 'form': form})
+
+
+
+
+
+
+# Approve Payment View
+def approve_payment(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    if order.payment_status == 'Pending':  # Check if the payment is still pending
+        order.payment_status = 'Confirmed'
+        order.save()
+    return redirect('admin_orders')  # Redirect to the order management page after approving*``
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

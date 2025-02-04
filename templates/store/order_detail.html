@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Details{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Order Details</h2>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for item in order_items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ item.product.name }}</strong> <br>
+                                <small>Unit Price: RWF {{ item.product.price }} | Qty: {{ item.quantity }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">RWF {{ item.subtotal }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <hr>
+                    <h5 class="text-end">Total: <strong>RWF {{ order.total_price }}</strong></h5>
+                </div>
+                <div class="card-body">
+                    <!-- Payment Status and Delivery Status -->
+                    <p><strong>Payment Status:</strong> {{ order.payment_status }}</p>
+                    <p><strong>Delivery Status:</strong> {{ order.delivery_status }}</p>
+
+                    <!-- If payment is Pending, show the Pay Now button -->
+                    {% if order.payment_status == 'Pending' %}
+                        <a href="{% url 'payment_method' order.id %}" class="btn btn-success w-10">Pay Now</a>
+                    {% else %}
+                        <p>Your payment is being processed. If approved, you'll receive a confirmation.</p>
+                    {% endif %}
+
+                    <!-- Admin only: Button to confirm payment -->
+                    {% if user.is_staff %}
+                        {% if order.payment_status == 'Pending' %}
+                            <a href="{% url 'confirm_payment' order.id %}" class="btn btn-primary">Confirm Payment</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,19 +1,36 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <h2 class="my-4 text-center">Your Orders</h2>
+<div class="container my-5">
+    <h2 class="text-center mb-4">Your Orders</h2>
     
-    {% if grouped_orders %}
-        {% for group in grouped_orders %}
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <!-- Display the formatted order time -->
-                <h5 class="card-title">Order placed on: {{ group.group_date|date:"D, d M Y H:i" }}</h5>
-                <p class="card-text"><small class="text-muted">Time: {{ group.group_date|date:"D, d M Y H:i" }}</small></p>
-                
-                <div class="table-responsive">
-                    <table class="table table-striped">
+    {% if orders %}
+        <div class="list-group">
+            {% for order in orders %}
+                <div class="list-group-item mb-3">
+                    <h5>Order for {{ order.customer.user.username }} - Placed on {{ order.ordered_at|date:"D, d M Y H:i" }}</h5>
+
+                    <!-- Order status and total -->
+                    <div class="mb-2">
+                        <strong>Payment Status: </strong>
+                        <span class="badge 
+                            {% if order.payment_status == 'Confirmed' %}bg-success
+                            {% else %}bg-warning{% endif %}">
+                            {{ order.payment_status_display }}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Delivery Status: </strong>
+                        <span class="badge
+                            {% if order.delivery_status == 'Delivered' %}bg-success
+                            {% elif order.delivery_status == 'Shipped' %}bg-info
+                            {% else %}bg-warning{% endif %}">
+                            {{ order.delivery_status_display }}
+                        </span>
+                    </div>
+
+                    <h6>Order Items:</h6>
+                    <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th>Product</th>
@@ -23,49 +40,33 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for order in group.orders %}
-                            <tr>
-                                <td>{{ order.product.name }}</td>
-                                <td>{{ order.quantity }}</td>
-                                <td>{{ order.product.price }}</td>
-                                <td>{{ order.subtotal_price }}</td>
-                            </tr>
+                            {% for item in order.order_items.all %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong><br>
+                                        {% if item.product.product_images.all %}
+                                            <img src="{{ item.product.product_images.first.image.url }}" alt="{{ item.product.name }}" style="width: 50px; height: 50px;">
+                                        {% else %}
+                                            <span>No image</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.product.price }}</td>
+                                    <td>{{ item.subtotal }}</td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <h6>Total: <strong>FRW {{ group.total_price_for_group }}</strong></h6>
-                    
-                    {% if group.orders.0.payment_approved %}
-                    <span class="badge bg-success">Paid</span>
-                    {% else %}
-                    <span class="badge bg-warning">Pending Payment</span>
-                    <a href="#" class="btn btn-primary btn-sm">Pay Now</a>
-                    {% endif %}
+                    <div class="d-flex justify-content-between">
+                        <strong>Total: </strong><span>{{ order.total_price }} FRW</span>
+                        <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-info btn-sm">View Details</a>
+                    </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     {% else %}
-        <p class="text-center">You have no orders.</p>
+        <p class="text-center text-muted">You have no orders.</p>
     {% endif %}
 </div>
-
-<!-- Additional Styles for Better Layout -->
-<style>
-    .table th, .table td {
-        vertical-align: middle;
-    }
-
-    .badge {
-        font-size: 0.9em;
-    }
-    
-    .btn-primary {
-        font-size: 0.9em;
-    }
-</style>
-
 {% endblock %}

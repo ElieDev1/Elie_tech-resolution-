@@ -3,43 +3,105 @@
 {% block content %}
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-2xl font-bold mb-4">Order Management</h2>
-        
-        <div class="overflow-x-auto">
-            <table class="min-w-full">
-                <thead>
-                    <tr class="bg-gray-50">
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for order in orders %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ order.id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ order.customer.user.username }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ order.product.name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if order.payment_approved %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for order in orders %}
+                <div class="bg-gray-50 p-4 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="font-semibold text-lg">
+                            Order #{{ order.id }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            Customer: {{ order.customer.user.username }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div>
+                            <strong>Products:</strong>
+                            <div>
+                                {% for item in order.order_items.all %}
+                                    <div>{{ item.product.name }} - {{ item.quantity }} units</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <strong>Payment Status:</strong>
+                            {% if order.payment_status == 'Confirmed' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Confirmed</span>
                             {% else %}
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Pending</span>
                             {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if not order.payment_approved %}
-                            <form method="post" action="{% url 'approve_payment' order.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Approve</button>
-                            </form>
+                        </div>
+
+                        <div>
+                            <strong>Payment Details:</strong>
+                            {% if order.payment_message %}
+                                <button class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600" data-bs-toggle="modal" data-bs-target="#paymentMessageModal-{{ order.id }}">View Payment Message</button>
                             {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% if order.payment_image %}
+                                <button class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600" data-bs-toggle="modal" data-bs-target="#paymentImageModal-{{ order.id }}">View Payment Image</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        {% if order.payment_status == 'Pending' %}
+                        <form method="post" action="{% url 'approve_payment' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Approve Payment</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Payment Message Modal -->
+                {% if order.payment_message %}
+                <div class="modal fade" id="paymentMessageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentMessageModalLabel-{{ order.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="paymentMessageModalLabel-{{ order.id }}">Payment Message for Order #{{ order.id }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>{{ order.payment_message }}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Payment Image Modal -->
+                {% if order.payment_image %}
+                <div class="modal fade" id="paymentImageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentImageModalLabel-{{ order.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="paymentImageModalLabel-{{ order.id }}">Payment Image for Order #{{ order.id }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-full">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            {% endfor %}
         </div>
     </div>
+
+    <!-- Include Bootstrap CSS and JavaScript (for Bootstrap 5) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
 {% endblock %}

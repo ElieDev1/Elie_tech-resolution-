@@ -64,16 +64,33 @@ class Customer(models.Model):
         return self.user.username
 
 class Order(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_approved = models.BooleanField(default=False)
     ordered_at = models.DateTimeField(auto_now_add=True)
+    
+    # Delivery status
+    delivery_status = models.CharField(max_length=100, choices=[('Pending', 'Pending'), ('Shipped', 'Shipped'), ('Delivered', 'Delivered')], default='Pending')
+
+    # Payment-related fields
+    payment_message = models.TextField(blank=True, null=True)
+    payment_image = models.ImageField(upload_to='payment_images/', blank=True, null=True)
+    payment_status = models.CharField(
+        choices=[('Pending', 'Pending'), ('Confirmed', 'Confirmed')],
+        default='Pending', max_length=10
+    )
 
     def __str__(self):
-        return f"Order {self.id} - {self.customer.user.username}"
+        return f"Order for {self.customer.user.username} placed on {self.ordered_at}"
 
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, related_name='order_items', on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.quantity} items"
 
 class Message(models.Model):
     sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)

@@ -11,6 +11,11 @@ urlpatterns = [
     path('logout/', views.logout_user, name='logout'),
     path('products/', views.product_list, name='product_list'),
     path('chekout/', views.checkout, name='checkout'),
+    path('process-checkout/', views.process_checkout, name='process_checkout'),
+   
+
+
+
     path('profile/', views.profile_view, name='profile'),
     path('edit-profile/', views.edit_profile, name='edit_profile'),
     path('orders/', views.order_list, name='order_list'),
@@ -45,7 +50,11 @@ urlpatterns = [
     
     # Order Management
     path('admin-panel/orders/', views.admin_orders, name='admin_orders'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('order/<int:order_id>/payment/', views.payment_method, name='payment_method'),
     path('admin-panel/orders/approve/<int:order_id>/', views.approve_payment, name='approve_payment'),
+    
+
     
     # User Management
     path('admin-panel/users/', views.admin_users, name='admin_users'),
