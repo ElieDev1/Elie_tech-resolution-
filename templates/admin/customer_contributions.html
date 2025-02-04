@@ -1,0 +1,35 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<a href="{% url 'admin_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
+    <div class="container">
+        <h1>All Customers and Their Contributions</h1>
+        {% if customers %}
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>firstname</th>
+                        <th>lastname</th>
+                        <th>phone_number</th>
+                        <th>Total Contribution (RWF)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.user.username }}</td>
+                            <td>{{ customer.user.first_name }}</td>
+                            <td>{{ customer.user.last_name }}</td>
+                            <td>{{ customer.phone_number }}</td>
+                            <td>{{ customer.total_spent|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No customers found.</p>
+        {% endif %}
+    </div>
+    <a href="{% url 'admin_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
+{% endblock %}

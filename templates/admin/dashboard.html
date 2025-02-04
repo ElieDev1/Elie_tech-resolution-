@@ -67,19 +67,23 @@
     
     <div class="row mt-4">
         <div class="col-md-6 mb-4">
-            <div class="card border-light shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title">Top Selling Products</h4>
-                    <ul class="list-group">
-                        {% for product in top_selling_products %}
-                            <li class="list-group-item">{{ product.name }} - Sold: <span class="badge bg-info">{{ product.total_sold }}</span></li>
-                        {% empty %}
-                            <li class="list-group-item">No data available.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+        <div class="card border-light shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title">Top Selling Products</h4>
+                <ul class="list-group">
+                    {% for product in top_selling_products %}
+                        <li class="list-group-item">{{ product.name }} - Sold: <span class="badge bg-info">{{ product.total_sold }}</span></li>
+                    {% empty %}
+                        <li class="list-group-item">No data available.</li>
+                    {% endfor %}
+                </ul>
+                <!-- View More Button -->
+                <a href="{% url 'sold_products_list' %}" class="mt-3 w-100 text-primary">View More</a>
+
             </div>
         </div>
+    </div>
+    
         <div class="col-md-6 mb-4">
             <div class="card border-light shadow-sm">
                 <div class="card-body">
@@ -99,49 +103,64 @@
     <div class="row mt-4">
         <div class="col-md-6 mb-4">
             <div class="card border-light shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title">Top Customers</h4>
-                    <ul class="list-group">
-                        {% for customer in top_customers %}
-                            <li class="list-group-item">{{ customer.user.username }} - Spent: <span class="badge bg-warning">${{ customer.total_spent|floatformat:2 }}</span></li>
-                        {% empty %}
-                            <li class="list-group-item">No data available.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+            <div class="card-body">
+                <h4 class="card-title">Top Customers</h4>
+                <ul class="list-group">
+                    {% for customer in top_customers %}
+                        <li class="list-group-item">
+                            {{ customer.user.username }} - Spent: 
+                            <span class="badge bg-warning">${{ customer.total_spent|floatformat:2 }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">No data available.</li>
+                    {% endfor %}
+                </ul>
+                <!-- View All Button -->
+                <a href="{% url 'customer_contributions' %}" class="btn btn-primary mt-3">View All</a>
+
             </div>
+        </div>
+        
         </div>
         <div class="col-md-6 mb-4">
             <div class="card border-light shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title">New Customers</h4>
-                    <ul class="list-group">
-                        {% for customer in new_customers %}
-                            <li class="list-group-item">{{ customer.user.username }} - Joined: {{ customer.user.date_joined }}</li>
-                        {% empty %}
-                            <li class="list-group-item">No new customers.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+            <div class="card-body">
+                <h4 class="card-title">New Customers</h4>
+                <ul class="list-group">
+                    {% for customer in new_customers %}
+                        <li class="list-group-item">{{ customer.user.username }} - Joined: {{ customer.user.date_joined }}</li>
+                    {% empty %}
+                        <li class="list-group-item">No new customers.</li>
+                    {% endfor %}
+                </ul>
+                <!-- View All Customers Link -->
+                <a href="{% url 'all_customers' %}" class="mt-3 w-100 text-primary">View All</a>
+            
+
             </div>
+        </div>
+        
         </div>
     </div>
 
     <div class="row mt-4">
         <div class="col-md-6 mb-4">
-            <div class="card border-light shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title">Low Stock Products</h4>
-                    <ul class="list-group">
-                        {% for product in low_stock_products %}
-                            <li class="list-group-item">{{ product.name }} - Stock: <span class="badge bg-dark">{{ product.stock }}</span></li>
-                        {% empty %}
-                            <li class="list-group-item">All products are sufficiently stocked.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+        <div class="card border-light shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title">Low Stock Products</h4>
+                <ul class="list-group">
+                    {% for product in low_stock_products %}
+                        <li class="list-group-item">{{ product.name }} - Stock: <span class="badge bg-dark">{{ product.stock }}</span></li>
+                    {% empty %}
+                        <li class="list-group-item">All products are sufficiently stocked.</li>
+                    {% endfor %}
+                </ul>
+                <!-- Button or Link to View All Products -->
+                <a href="{% url 'all_products' %}" class="btn btn-primary mt-3">View stock</a>
             </div>
         </div>
+    </div>
+    
         <div class="col-md-6 mb-4">
             <div class="card border-danger shadow-sm">
                 <div class="card-body">
@@ -190,6 +209,10 @@
         flex-wrap: wrap;
         justify-content: space-between;
     }
+    a.text-primary {
+        text-decoration: none; /* Removes underline */
+    }
+
 
     .col-md-6 {
         flex: 0 0 48%; /* Ensures cards are of equal width on large screens */

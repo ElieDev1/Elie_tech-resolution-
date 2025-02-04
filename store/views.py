@@ -856,7 +856,7 @@ def edit_profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile updated successfully!')
-            return redirect('edit_profile')  # Redirect to the same page after successful edit
+            return redirect('profile')  # Redirect to the same page after successful edit
     else:
         form = EditProfileForm(instance=request.user)  # Pre-fill the form with current user data
 
@@ -1237,3 +1237,40 @@ def admin_dashboard(request):
     }
 
     return render(request, 'admin/dashboard.html', context)
+
+
+
+@staff_member_required
+def all_products(request):
+    
+    products = Product.objects.all()
+    
+    return render(request, 'admin/all_products.html', {'products': products})
+
+
+
+def sold_products_list(request):
+   
+    products = Product.objects.all().annotate(
+        total_sold=Sum('orderitem__quantity')  
+    )
+    return render(request, 'admin/sold_products_list.html', {'products': products})
+
+
+def all_customers(request):
+    # Fetch all customers ordered by the most recent registration date
+    customers = Customer.objects.all().order_by('-user__date_joined')  # Ordering by the related User's join date
+    
+    return render(request, 'admin/all_customers.html', {'customers': customers})
+
+
+
+
+
+def customer_contributions(request):
+    # Annotate each customer with their total spending
+    customers = Customer.objects.annotate(
+        total_spent=Sum('order__total_price', filter=Q(order__payment_status='Confirmed'))
+    ).order_by('-total_spent')
+
+    return render(request, 'admin/customer_contributions.html', {'customers': customers})

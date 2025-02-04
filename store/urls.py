@@ -40,6 +40,9 @@ urlpatterns = [
 
 
     path('admin-panel/', views.admin_dashboard, name='admin_dashboard'),
+    path('sold-products/', views.sold_products_list, name='sold_products_list'),
+    path('all-customers/', views.all_customers, name='all_customers'),
+    path('customer-contributions/', views.customer_contributions, name='customer_contributions'),
     
     # Product Management
     path('admin-panel/products/', views.admin_products, name='admin_products'),
@@ -81,6 +84,7 @@ urlpatterns = [
     path('admin-panel/comments/view/<int:comment_id>/', views.admin_view_comment, name='admin_view_comment'),
     path('admin-panel/comments/edit/<int:comment_id>/', views.admin_edit_comment, name='admin_edit_comment'),
     path('admin-panel/comments/delete/<int:comment_id>/', views.admin_delete_comment, name='admin_delete_comment'),
+    path('admin-panel/all-products/', views.all_products, name='all_products'),
     
    
 

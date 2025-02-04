@@ -1,0 +1,32 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<a href="{% url 'admin_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
+<div class="container mt-5">
+
+    <h3 class="mb-4">All Sold Products</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Total Sold</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.total_sold }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2">No sold products available.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<a href="{% url 'admin_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
+{% endblock %}
