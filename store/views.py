@@ -893,10 +893,6 @@ def admin_view_user(request, user_id):
         'liked_products': liked_products
     })
 
-
-
-
-
 def admin_search(request):
     query = request.GET.get('query', '')
     
@@ -907,11 +903,13 @@ def admin_search(request):
         Q(category__icontains=query)
     )
     
+    # Search in Orders (including searching product names related to orders)
     orders = Order.objects.filter(
-        Q(customer__user__username__icontains=query) | 
-        Q(product__name__icontains=query)
-    )
+        Q(customer__user__username__icontains=query) |
+        Q(order_items__product__name__icontains=query)  # Corrected to reference `order_items` and `product`
+    ).prefetch_related('order_items')  # Prefetch order_items for efficient querying
     
+    # Search in Users
     users = User.objects.filter(
         Q(username__icontains=query) | 
         Q(first_name__icontains=query) | 
@@ -937,9 +935,6 @@ def admin_search(request):
         'messages': messages,
         'team_members': team_members,
     })
-
-
-
 
 
 
