@@ -1094,6 +1094,18 @@ def admin_delete_comment(request, comment_id):
 
 
 
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    return render(request, 'admin/order_detail.html', {'order': order})
+
+def delete_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.delete()
+    messages.success(request, "Order deleted successfully.")
+    return redirect('admin_orders')
+
+
+
 
 
 

@@ -51,6 +51,7 @@ urlpatterns = [
     # Order Management
     path('admin-panel/orders/', views.admin_orders, name='admin_orders'),
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('orders/<int:order_id>/delete/', views.delete_order, name='delete_order'),
     path('order/<int:order_id>/payment/', views.payment_method, name='payment_method'),
     path('admin-panel/orders/approve/<int:order_id>/', views.approve_payment, name='approve_payment'),
     

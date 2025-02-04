@@ -1,0 +1,34 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+    <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
+        <h2 class="text-3xl font-bold mb-6 text-gray-800">Order #{{ order.id }} Details</h2>
+        
+        <p><strong>👤 Customer:</strong> {{ order.customer.user.username }}</p>
+        <p><strong>💳 Payment Status:</strong> {{ order.payment_status }}</p>
+        
+        <h3 class="text-xl font-bold mt-4">📦 Products</h3>
+        <ul>
+            {% for item in order.order_items.all %}
+                <li>{{ item.product.name }} - {{ item.quantity }} units</li>
+            {% endfor %}
+        </ul>
+
+        <h3 class="text-xl font-bold mt-4">💰 Payment Proof</h3>
+        {% if order.payment_message %}
+            <p>📩 {{ order.payment_message }}</p>
+        {% endif %}
+        {% if order.payment_image %}
+            <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-64 rounded-lg shadow-md">
+        {% else %}
+            <p class="text-gray-600 italic">⚠️ No payment proof provided.</p>
+        {% endif %}
+
+        <div class="mt-6">
+            <a href="{% url 'admin_orders' %}" class="btn btn-secondary">⬅️ Back to Orders</a>
+            <form action="{% url 'delete_order' order.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">🗑️ Delete Order</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

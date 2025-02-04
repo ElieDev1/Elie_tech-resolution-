@@ -12,7 +12,7 @@
                             🛒 Order #{{ order.id }}
                         </div>
                         <div class="text-sm text-gray-600">
-                            👤 Customer: <span class="font-semibold">{{ order.customer.user.username }}</span>
+                            👤 Customer: <span class="font-semibold"><strong>{{ order.customer.user.username }} {{ order.customer.user.first_name }}</strong></span>
                         </div>
                     </div>
 
@@ -61,10 +61,16 @@
                                         🖼️ View Payment Image
                                     </button>
                                 {% endif %}
+                                <a href="{% url 'order_detail' order.id %}" class="btn ">🔍 View Details</a>
                             </div>
                         
                             {% if not order.payment_message and not order.payment_image %}
                                 <p class="text-gray-600 italic mt-2">⚠️ No payment proof provided.</p>
+                                <a href="{% url 'order_detail' order.id %}" class="btn btn-primary">🔍 View Details</a>
+                                <form action="{% url 'delete_order' order.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">🗑️ Delete</button>
+                                </form>
                             {% endif %}
                         </div>
                         
