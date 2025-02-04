@@ -632,6 +632,7 @@ def unread_message_count(request):
 
 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.utils import timezone
 
 @staff_member_required
 def admin_dashboard(request):
@@ -652,18 +653,58 @@ def admin_products(request):
 
 from django.contrib.admin.views.decorators import staff_member_required
 
-from django.contrib.admin.views.decorators import staff_member_required
+
+
+
+
 
 @staff_member_required
 def admin_orders(request):
+    # Get current date for "Today" filter
+    today = timezone.now().date()
+
+    # Filter by status or today's orders
+    status_filter = request.GET.get('status', None)
+    date_filter = request.GET.get('date', None)
+
     # Use prefetch_related to fetch related products via OrderItem
     orders = Order.objects.prefetch_related(
         'order_items__product'  # Prefetch related products through the order_items relation
     ).select_related(
         'customer__user'  # Select related customer and user data
-    ).order_by('-ordered_at')  # Order by the ordered_at field in descending order (newest first)
+    )
+
+    # Apply filters
+    if status_filter:
+        orders = orders.filter(payment_status=status_filter)
+
+    if date_filter == 'today':
+        orders = orders.filter(ordered_at__date=today)
+
+    # Order by the ordered_at field in descending order (newest first)
+    orders = orders.order_by('-ordered_at')
 
     return render(request, 'admin/orders.html', {'orders': orders})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
