@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">Order Details</h2>
+    <h2 class="mb-4 text-center">Order Details</h2>
 
     <div class="row">
         <div class="col-md-12">
@@ -13,42 +13,110 @@
                     <h5 class="mb-0">Order Summary</h5>
                 </div>
                 <div class="card-body">
-                    <ul class="list-group">
-                        {% for item in order_items %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ item.product.name }}</strong> <br>
-                                <small>Unit Price: RWF {{ item.product.price }} | Qty: {{ item.quantity }}</small>
-                            </div>
-                            <span class="badge bg-primary rounded-pill">RWF {{ item.subtotal }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
+                    <p><strong>Order ID:</strong> 000{{ order.id }}</p>
+                    <p><strong>Customer:</strong> {{ order.customer.user.username|default:"Guest" }}</p>
+                    <p><strong>Order Date:</strong> {{ order.ordered_at|date:"D, d M Y H:i" }}</p>
+
+                    <!-- Order Items -->
+                    {% if order_items %}
+                        <ul class="list-group">
+                            {% for item in order_items %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <!-- Product Image -->
+                                        {% if item.product.product_images.all %}
+                                            <img src="{{ item.product.product_images.first.image.url }}" 
+                                                 alt="{{ item.product.name }}" 
+                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px; margin-right: 10px;">
+                                        {% else %}
+                                            <span style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; border-radius: 5px; margin-right: 10px;">
+                                                No image
+                                            </span>
+                                        {% endif %}
+                                      
+                                        <div>
+                                            <strong>{{ item.product.name }}</strong> <br>
+                                            <small>Unit Price: RWF {{ item.product.price }} | Qty: {{ item.quantity }}</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">RWF {{ item.subtotal }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-danger text-center">No items found for this order.</p>
+                    {% endif %}
 
                     <hr>
                     <h5 class="text-end">Total: <strong>RWF {{ order.total_price }}</strong></h5>
                 </div>
+
+                <!-- Payment & Delivery Status -->
                 <div class="card-body">
-                    <!-- Payment Status and Delivery Status -->
-                    <p><strong>Payment Status:</strong> {{ order.payment_status }}</p>
-                    <p><strong>Delivery Status:</strong> {{ order.delivery_status }}</p>
+                    <p>
+                        <strong>Payment Status:</strong>
+                        <span class="badge 
+                            {% if order.payment_status == 'Confirmed' %}bg-success
+                            {% elif order.payment_status == 'Pending' %}bg-warning
+                            {% else %}bg-danger{% endif %}">
+                            {{ order.payment_status|default:"Unknown" }}
+                        </span>
+                    </p>
 
-                    <!-- If payment is Pending, show the Pay Now button -->
-                    {% if order.payment_status == 'Pending' %}
-                        <a href="{% url 'payment_method' order.id %}" class="btn btn-success w-10">Pay Now</a>
-                    {% else %}
-                        <p>Your payment is being processed. If approved, you'll receive a confirmation.</p>
-                    {% endif %}
+                    <p>
+                        <strong>Delivery Status:</strong>
+                        <span class="badge 
+                            {% if order.delivery_status == 'Delivered' %}bg-success
+                            {% elif order.delivery_status == 'Shipped' %}bg-info
+                            {% else %}bg-warning{% endif %}">
+                            {{ order.delivery_status|default:"Pending" }}
+                        </span>
+                    </p>
 
-                    <!-- Admin only: Button to confirm payment -->
-                    {% if user.is_staff %}
+                    <!-- Payment Actions -->
+                    <div class="d-flex justify-content-between">
                         {% if order.payment_status == 'Pending' %}
-                            <a href="{% url 'confirm_payment' order.id %}" class="btn btn-primary">Confirm Payment</a>
+                            <a href="{% url 'payment_method' order.id %}" class="btn btn-success w-50 p-3 fw-bold">Pay Now</a>
+                        {% else %}
+                            <p class="text-success">Your payment is being processed. If approved, you'll receive a confirmation.</p>
                         {% endif %}
-                    {% endif %}
+                    
+                        <!-- Cancel Order Button -->
+                        {% if order.delivery_status == 'Pending' or order.delivery_status == 'Processing' %}
+                            <button class="btn btn-danger w-auto p-2 fw-bold" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                                Cancel Order
+                            </button>
+                        {% endif %}
+                    </div>
+                    
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to cancel this order? This action will delete the order permanently.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary p-3" data-bs-dismiss="modal">Close</button>
+        <form action="{% url 'cancel_order' order.id %}" method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger p-3 fw-bold">
+                Yes, Cancel Order
+            </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

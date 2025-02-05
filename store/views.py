@@ -13,8 +13,17 @@ from django.core.paginator import Paginator
 import json
 from datetime import datetime, timedelta
 from django.utils import timezone
-
 from .forms import *
+from django.contrib.auth import views as auth_views
+from django.urls import reverse_lazy
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.template.loader import render_to_string
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.conf import settings
 
 
 
@@ -1117,20 +1126,62 @@ def admin_delete_comment(request, comment_id):
         return redirect('admin_comment_list')
     return HttpResponseForbidden("Invalid request method.")
 
+@login_required
+def cancel_order(request, order_id):
+    # Retrieve the order or return a 404 error if not found
+    order = get_object_or_404(Order, id=order_id)
+
+    # Check if order is still pending or processing before deleting
+    if order.delivery_status in ['Pending', 'Processing']:
+        # Delete the order from the database
+        order.delete()
+        messages.success(request, f"Your order #{order.id} has been deleted successfully.")
+    else:
+        messages.error(request, "You cannot cancel an order that has already been shipped or delivered.")
+
+    return redirect('order_list')  # Redirect to a list of orders or a suitable page
 
 
 
 
 
 
+def confirm_delivery(request, order_id):
+    # Fetch the order using the provided order_id
+    order = get_object_or_404(Order, id=order_id)
+
+    # Only allow confirmation if payment is confirmed and status is not already 'Delivered'
+    if order.payment_status == 'Confirmed' and order.delivery_status != 'Delivered':
+        order.delivery_status = 'Delivered'
+        order.save()
+        messages.success(request, f"Order #{order.id} has been delivered successfully.")
+    else:
+        messages.error(request, f"Order #{order.id} cannot be delivered yet.")
+
+    return redirect('admin_order_detail', order_id=order.id)
 
 
 
-
-
-
-
+@login_required
 def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Debugging
+    print(f"Fetching order: {order}")
+    print(f"Order items count: {order.order_items.count()}")
+    
+    order_items = order.order_items.all()
+
+    context = {
+        'order': order,
+        'order_items': order_items
+    }
+    return render(request, 'store/order_detail.html', context)
+
+
+
+
+def admin_order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     return render(request, 'admin/order_detail.html', {'order': order})
 
@@ -1274,3 +1325,53 @@ def customer_contributions(request):
     ).order_by('-total_spent')
 
     return render(request, 'admin/customer_contributions.html', {'customers': customers})
+
+
+
+
+
+
+
+
+
+# Password Reset View (The form to request a password reset)
+class CustomPasswordResetView(auth_views.PasswordResetView):
+    template_name = 'registration/password_reset_form.html'
+    email_template_name = 'registration/password_reset_email.html'
+    success_url = reverse_lazy('password_reset_done')
+
+# Password Reset Done View (Confirmation that a reset link has been sent)
+class CustomPasswordResetDoneView(auth_views.PasswordResetDoneView):
+    template_name = 'registration/password_reset_done.html'
+
+# Password Reset Confirm View (Set a new password via token)
+class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    template_name = 'registration/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+# Password Reset Complete View (Confirmation that the password has been reset successfully)
+class CustomPasswordResetCompleteView(auth_views.PasswordResetCompleteView):
+    template_name = 'registration/password_reset_complete.html'
+
+
+# In case you want a custom password reset form, here is an example:
+def custom_password_reset_form(request):
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            # Custom logic (for example, send a custom email)
+            user = User.objects.filter(email=email).first()
+            if user:
+                # Send custom password reset email here
+                send_mail(
+                    'Password Reset Request',
+                    'Here is your reset link: http://example.com/reset_link',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                return HttpResponse("Password reset email has been sent!")
+    else:
+        form = PasswordResetForm()
+    return render(request, 'registration/password_reset_form.html', {'form': form})

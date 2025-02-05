@@ -9,6 +9,12 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
+     # Password reset URL
+    path('reset_password/', views.auth_views.PasswordResetView.as_view(), name='password_reset'),
+    path('reset_password_sent/', views.auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', views.auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset_password_complete/', views.auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    
     path('products/', views.product_list, name='product_list'),
     path('chekout/', views.checkout, name='checkout'),
     path('process-checkout/', views.process_checkout, name='process_checkout'),
@@ -27,7 +33,9 @@ urlpatterns = [
     path('cart/clear/', views.clear_cart, name='clear_cart'), # Remove product from cart
     path('cart/increase/<int:product_id>/', views.increase_quantity, name='increase_quantity'),
     path('cart/decrease/<int:product_id>/', views.decrease_quantity, name='decrease_quantity'),
-   
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('order/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+
 
 
     path('messages/', views.message_page, name='messages'),
@@ -53,10 +61,11 @@ urlpatterns = [
     
     # Order Management
     path('admin-panel/orders/', views.admin_orders, name='admin_orders'),
-    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('admin_order/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
     path('orders/<int:order_id>/delete/', views.delete_order, name='delete_order'),
     path('order/<int:order_id>/payment/', views.payment_method, name='payment_method'),
     path('admin-panel/orders/approve/<int:order_id>/', views.approve_payment, name='approve_payment'),
+    path('confirm-delivery/<int:order_id>/', views.confirm_delivery, name='confirm_delivery'),
     
 
     
