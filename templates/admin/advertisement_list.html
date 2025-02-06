@@ -1,0 +1,30 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+    <h2>Manage Advertisements</h2>
+    <a href="{% url 'create_advertisement' %}" class="btn btn-primary">Create Advertisement</a>
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ad in advertisements %}
+                <tr>
+                    <td>{{ ad.title }}</td>
+                    <td>{{ ad.start_date }}</td>
+                    <td>{{ ad.end_date }}</td>
+                    <td>{{ ad.active }}</td>
+                    <td>
+                        <a href="{% url 'edit_advertisement' ad.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="{% url 'delete_advertisement' ad.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

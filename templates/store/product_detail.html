@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="container">
     <h2 class="my-4 text-center">{{ product.name }}</h2>
@@ -58,8 +58,8 @@
             <!-- Product Details Card -->
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
-                    <h4 class="price">Price: FRW {{ product.price }}</h4>
-                    <p><strong>Stock:</strong> {{ product.stock }}</p>
+                    <h4 class="price">Price: FRW {{ product.price |intcomma }}</h4>
+                    <p><strong>Stock:</strong> {{ product.stock|intcomma  }}</p>
                     <p class="description">
                         <span id="short-description">{{ product.description|truncatewords:30 }}</span>
                         <span id="full-description" style="display: none;">{{ product.description }}</span>
@@ -74,7 +74,7 @@
                         <button class="btn btn-danger" id="like-btn-{{ product.id }}" onclick="toggleLike('{{ product.id }}', true)">
                             <i class="fa fa-heart"></i> Like
                         </button>
-                        <span id="like-count-{{ product.id }}" class="ml-2">{{ product.likes.count }} Likes</span>
+                        <span id="like-count-{{ product.id }}" class="ml-2">{{ product.likes.count|intcomma  }} Likes</span>
                     </div>
                 </div>
             </div><!-- More Images (Sliding Gallery) -->

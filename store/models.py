@@ -134,3 +134,30 @@ class TeamMember(models.Model):
         return f"{self.name} - {self.get_role_display()}"
 
 
+from django.utils import timezone
+
+class Advertisement(models.Model):
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='advertisements/', blank=True, null=True)
+    link = models.URLField(blank=True, null=True)  # Link to the product or promo page
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+    def is_active(self):
+        return self.active and self.start_date <= timezone.now() <= self.end_date
+
+
+class Notification(models.Model):
+    user = models.ManyToManyField(User, related_name="notifications", blank=True)  # Allows selection of multiple users
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+    for_all = models.BooleanField(default=False)  # True if the notification is for all users
+
+    def __str__(self):
+        return self.message[:50]
+

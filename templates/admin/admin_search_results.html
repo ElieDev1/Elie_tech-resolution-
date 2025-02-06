@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="bg-white p-6 rounded-lg shadow-md mt-4">
     <h1 class="text-2xl font-bold mb-4 text-gray-800">Search Results for "{{ query }}"</h1>
@@ -41,7 +41,7 @@
             <a href="{% url 'admin_orders' %}" class="text-blue-600 font-semibold">Order #{{ order.id }} ({{ order.customer.user.username }})</a>
             <div class="text-gray-500 mt-2">Status: <span class="font-semibold">{{ order.get_status_display }}</span></div>
             <div class="mt-2">
-                <span class="font-semibold">Total Amount:</span> ${{ order.total_price }}
+                <span class="font-semibold">Total Amount:</span> ${{ order.total_price|intcomma  }}
             </div>
             <!-- Display Order Items -->
             <div class="mt-4">

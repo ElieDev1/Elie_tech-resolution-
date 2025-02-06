@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center mb-4">Admin Dashboard</h2>
@@ -9,7 +9,7 @@
             <div class="card border-primary shadow-sm h-100">
                 <div class="card-body text-center">
                     <h5 class="text-primary">Total Customers</h5>
-                    <p class="display-6 fw-bold">{{ total_customers }}</p>
+                    <p class="display-6 fw-bold">{{ total_customers|intcomma  }}</p>
                 </div>
             </div>
         </div>
@@ -17,7 +17,7 @@
             <div class="card border-success shadow-sm h-100">
                 <div class="card-body text-center">
                     <h5 class="text-success">Total Orders</h5>
-                    <p class="display-6 fw-bold">{{ total_orders }}</p>
+                    <p class="display-6 fw-bold">{{ total_orders|intcomma  }}</p>
                 </div>
             </div>
         </div>
@@ -25,7 +25,7 @@
             <div class="card border-danger shadow-sm h-100">
                 <div class="card-body text-center">
                     <h5 class="text-danger">Total Revenue</h5>
-                    <p class="display-6 fw-bold">${{ total_revenue|floatformat:2 }}</p>
+                    <p class="display-6 fw-bold"> RWF {{ total_revenue|floatformat:0|intcomma  }}</p>
                 </div>
             </div>
         </div>
@@ -33,7 +33,7 @@
             <div class="card border-warning shadow-sm h-100">
                 <div class="card-body text-center">
                     <h5 class="text-warning">Total Products</h5>
-                    <p class="display-6 fw-bold">{{ total_products }}</p>
+                    <p class="display-6 fw-bold">{{ total_products |intcomma }}</p>
                 </div>
             </div>
         </div>
@@ -109,7 +109,7 @@
                     {% for customer in top_customers %}
                         <li class="list-group-item">
                             {{ customer.user.username }} - Spent: 
-                            <span class="badge bg-warning">${{ customer.total_spent|floatformat:2 }}</span>
+                            <span class="badge bg-warning">${{ customer.total_spent|floatformat:0 }}</span>
                         </li>
                     {% empty %}
                         <li class="list-group-item">No data available.</li>

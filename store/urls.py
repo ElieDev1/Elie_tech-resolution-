@@ -14,7 +14,7 @@ urlpatterns = [
     path('reset_password_sent/', views.auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', views.auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset_password_complete/', views.auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-    
+
     path('products/', views.product_list, name='product_list'),
     path('chekout/', views.checkout, name='checkout'),
     path('process-checkout/', views.process_checkout, name='process_checkout'),
@@ -57,7 +57,7 @@ urlpatterns = [
     path('admin-panel/products/add/', views.add_product, name='admin_add_product'),
     path('admin-panel/products/edit/<int:pk>/', views.edit_product, name='admin_edit_product'),
     path('admin-panel/products/delete/<int:pk>/', views.delete_product, name='admin_delete_product'),
-    path('view-product/<int:product_id>/', views.admin_view_product, name='admin_view_product'),
+    path("admin-panel/product/<int:product_id>/", views.admin_product_detail, name="admin_product_detail"),
     
     # Order Management
     path('admin-panel/orders/', views.admin_orders, name='admin_orders'),
@@ -94,6 +94,17 @@ urlpatterns = [
     path('admin-panel/comments/edit/<int:comment_id>/', views.admin_edit_comment, name='admin_edit_comment'),
     path('admin-panel/comments/delete/<int:comment_id>/', views.admin_delete_comment, name='admin_delete_comment'),
     path('admin-panel/all-products/', views.all_products, name='all_products'),
+     # Advertisement URLs
+    path('advertisements/', views.advertisement_list, name='advertisement_list'),
+    path('advertisements/create/', views.create_advertisement, name='create_advertisement'),
+    path('advertisements/edit/<int:pk>/', views.edit_advertisement, name='edit_advertisement'),
+    path('advertisements/delete/<int:pk>/', views.delete_advertisement, name='delete_advertisement'),
+    
+    # Notification URLs
+    path('notifications/', views.notification_list, name='notification_list'),
+    path('notifications/create/', views.create_notification, name='create_notification'),
+    path('notifications/edit/<int:pk>/', views.edit_notification, name='edit_notification'),
+    path('notifications/delete/<int:pk>/', views.delete_notification, name='delete_notification'),
     
    
 

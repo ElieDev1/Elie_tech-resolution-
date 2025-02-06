@@ -1,7 +1,8 @@
 {% extends 'admin/base.html' %}
+{% load humanize %}
 {% block content %}
 <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
-    <h2 class="text-3xl font-bold mb-6 text-gray-800">Order 000{{ order.id }} Details   <strong style=" color:blue" >{{ order.total_price }} RWF</strong></h2>
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">Order 000{{ order.id }} Details   <strong style=" color:blue" >{{ order.total_price|intcomma  }} RWF</strong></h2>
     <hr>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

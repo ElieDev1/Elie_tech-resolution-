@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-
+{% load humanize %}
 {% block content %}
 <a href="{% url 'admin_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
 <div class="container mt-5">
@@ -17,7 +17,7 @@
                 {% for product in products %}
                     <tr>
                         <td>{{ product.name }}</td>
-                        <td>{{ product.total_sold }}</td>
+                        <td>{{ product.total_sold |intcomma }}</td>
                     </tr>
                 {% empty %}
                     <tr>

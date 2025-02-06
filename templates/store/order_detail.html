@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Order Details{% endblock %}
-
+{% load humanize %}
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4 text-center">Order Details</h2>
@@ -36,10 +36,10 @@
                                       
                                         <div>
                                             <strong>{{ item.product.name }}</strong> <br>
-                                            <small>Unit Price: RWF {{ item.product.price }} | Qty: {{ item.quantity }}</small>
+                                            <small>Unit Price: RWF {{ item.product.price |intcomma }} | Qty: {{ item.quantity }}</small>
                                         </div>
                                     </div>
-                                    <span class="badge bg-primary rounded-pill">RWF {{ item.subtotal }}</span>
+                                    <span class="badge bg-primary rounded-pill">RWF {{ item.subtotal |intcomma }}</span>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -48,7 +48,7 @@
                     {% endif %}
 
                     <hr>
-                    <h5 class="text-end">Total: <strong>RWF {{ order.total_price }}</strong></h5>
+                    <h5 class="text-end">Total: <strong>RWF {{ order.total_price |intcomma }}</strong></h5>
                 </div>
 
                 <!-- Payment & Delivery Status -->

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load cart_filters %}
-
+{% load humanize %}
 {% block content %}
 <div class="container">
     <!-- Hero Section -->
@@ -20,7 +20,7 @@
                     <img src="{{ product.main_image }}" class="card-img-top product-img" alt="{{ product.name }}">
                     <div class="card-body text-center">
                         <h6 class="card-title">{{ product.name|truncatechars:15 }}</h6>
-                        <p class="card-text price">FRW {{ product.price }}</p>
+                        <p class="card-text price">FRW {{ product.pri|intcomma ce }}</p>
                         <div class="button-group">
                             <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm">
                                 <i class="fa fa-eye"></i> View
@@ -91,22 +91,22 @@
 
         <div class="col-md-9">
             <div class="row">
-                {% for item in products_with_likes %}
+                {% for item in all_products %}
                 <div class="col-6 col-sm-4 col-md-3 col-lg-2-4 mb-4">
                     <div class="card product-card h-100">
-                        {% if item.main_image %}  {# Check if the method returns a URL #}
+                        {% if item.main_image %}
                             <img src="{{ item.main_image }}" class="card-img-top product-img" alt="{{ item.name }}">
                         {% else %}
                             <img src="/static/default_image.jpg" class="card-img-top product-img" alt="No Image Available">
                         {% endif %}
                         <div class="card-body text-center p-2">
                             <h6 class="card-title mb-1">{{ item.name|truncatechars:20 }}</h6>
-                            <p class="card-text price mb-1">RWF {{ item.price }}</p>
+                            <p class="card-text price mb-1">RWF {{ item.price|intcomma  }}</p>
                             <h6 class="card-text mb-1">RWF {{ item.expected_price|truncatechars:20 }}</h6>
-                            
+        
                             <!-- Hidden Content -->
                             <div class="card-hidden-content">
-                                <small class="text-muted">Stock: {{ item.stock }}</small>
+                                <small class="text-muted">Stock: {{ item.stock |intcomma }}</small>
                                 <div class="like-section mt-1">
                                     <button class="btn like-btn" id="like-btn-{{ item.id }}" onclick="toggleLike('{{ item.id }}', true)">
                                         <i class="fa-regular fa-thumbs-up"></i>
@@ -114,7 +114,7 @@
                                     <button class="btn unlike-btn" id="unlike-btn-{{ item.id }}" onclick="toggleLike('{{ item.id }}', false)">
                                         <i class="fa-solid fa-thumbs-down"></i>
                                     </button>
-                                    <span id="like-count-{{ item.id }}" class="like-count">{{ item.likes_count }} like</span>
+                                    <span id="like-count-{{ item.id }}" class="like-count">{{ item.likes_count |intcomma }} like</span>
                                 </div>
                                 <div class="button-group mt-2 d-flex justify-content-between">
                                     <a href="{% url 'product_detail' item.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
@@ -135,8 +135,7 @@
                 {% endfor %}
             </div>
         </div>
-    </div>
-</div>
+    </div>    
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 

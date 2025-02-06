@@ -1,19 +1,21 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="container">
     <div class="row1 mb-4">
         <!-- Search Bar -->
-        <div class="col-12">
+        <div class="col-12 col-md-6 mx-auto">
             <form method="get" action="{% url 'product_list' %}" class="search-form">
                 <div class="input-group">
-                    <input type="text" class="form-control" name="q" placeholder="search for products" value="{{ request.GET.q }}">
-                    <button class="btn btn-primar" type="submit">
+                    <input type="text" class="form-control rounded-pill" name="q" placeholder="Search for products" value="{{ request.GET.q }}">
+                    <button class="btn btn-primary rounded-pill ms-2" type="submit">
                         <i class="fa fa-search"></i>
                     </button>
                 </div>
             </form>
         </div>
+        
+        
     </div>
 <!-- Latest Product Showcase -->
 <div class="latest-product-container d-none d-md-block">
@@ -31,8 +33,8 @@
         <!-- Product Info -->
         <div class="product-info">
             <h2>{{ item.product.name }}</h2>
-            <p class="price">Price: <strong>RWF {{ item.product.price }}</strong></p>
-            <p class="expected-price">RWF {{ item.product.expected_price }}</p>
+            <p class="price">Price: <strong>RWF {{ item.product.price |intcomma }}</strong></p>
+            <p class="expected-price">RWF {{ item.product.expected_price |intcomma }}</p>
             <p class="stock {% if item.product.stock == 0 %}out-of-stock{% endif %}">
                 Stock: {{ item.product.stock }}
             </p>
@@ -180,7 +182,7 @@
                         {% endif %}
                         <div class="card-body text-center p-2">
                             <h6 class="card-title mb-1">{{ item.product.name|truncatechars:20 }}</h6>
-                            <p class="card-text price mb-1">RWF {{ item.product.price }}</p>
+                            <p class="card-text price mb-1">RWF {{ item.product.price |intcomma }}</p>
                             <h6 class="card-text mb-1 ">RWF{{ item.product.expected_price|truncatechars:20 }}</h6>
                             
                             
@@ -194,7 +196,7 @@
                                     <button class="btn unlike-btn" id="unlike-btn-{{ item.product.id }}" onclick="toggleLike('{{ item.product.id }}', false)">
                                         <i class="fa-solid fa-thumbs-down"></i>
                                     </button>
-                                    <span id="like-count-{{ item.product.id }}" class="like-count">{{ item.product.likes.count }} like</span>
+                                    <span id="like-count-{{ item.product.id }}" class="like-count">{{ item.product.likes.count|intcomma  }} like</span>
                                 </div>
                                 <div class="button-group mt-2 d-flex justify-content-between">
                                     <a href="{% url 'product_detail' item.product.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">

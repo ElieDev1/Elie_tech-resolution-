@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% load humanize %}
 {% block content %}
 <div class="container mt-5">
     <div class="row">
@@ -23,15 +23,19 @@
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card border-secondary">
                 <div class="card-body">
-                    <h5 class="card-title">Order #{{ order.id }}</h5>
+                    <h5 class="card-title">Order 000{{ order.id }}</h5>
                     <p><strong>Product:</strong> {{ order.product.name }}</p>
                     <p><strong>Quantity:</strong> {{ order.quantity }}</p>
-                    <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+                    <p><strong>Total Price:</strong> rwf{{ order.total_price |intcomma }}</p>
                     <p><strong>Status:</strong> 
-                        {% if order.payment_approved %}
-                            <span class="badge bg-success">Approved</span>
+                        {% if order.payment_status == 'Confirmed' %}
+                            <span class="px-3 test-success py-1 inline-flex text-sm font-semibold rounded-full bg-green-200 text-green-800">
+                                ✅aproved
+                            </span>
                         {% else %}
-                            <span class="badge bg-warning">Pending</span>
+                        <span class="px-3 text-warning py-1 inline-flex text-sm font-semibold rounded-full bg-red-200 text-red-800">
+                            ⚠️Pending
+                            </span>
                         {% endif %}
                     </p>
                     <p><strong>Date:</strong> {{ order.ordered_at|date:"M d, Y" }}</p>
@@ -56,7 +60,7 @@
                     <img src="{{ product.main_image }}" class="card-img-top" alt="{{ product.name }}" style="height: 100px; object-fit: cover;">
                     <div class="card-body p-2">
                         <h6 class="card-title text-truncate">{{ product.name }}</h6>
-                        <p class="card-text text-muted">${{ product.price }}</p>
+                        <p class="card-text text-muted">${{ product.price |intcomma }}</p>
                         <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-primary">View</a>
                     </div>
                 </div>

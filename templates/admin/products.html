@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="bg-white rounded-lg shadow-md p-6">
     <div class="flex justify-between items-center mb-4">
@@ -17,11 +17,11 @@
                  class="w-24 h-24 object-cover rounded mb-2" 
                  alt="{{ product.name }}">
             <h3 class="text-sm font-semibold text-center">{{ product.name }}</h3>
-            <p class="text-gray-700 text-xs">Price: ${{ product.price }}</p>
-            <p class="text-gray-700 text-xs">Stock: {{ product.stock }}</p>
+            <p class="text-gray-700 text-xs">Price: RWF{{ product.price |intcomma }}</p>
+            <p class="text-gray-700 text-xs">Stock: {{ product.stock|intcomma  }}</p>
            
             <div class="flex space-x-2 mt-2 w-full justify-center">
-                <a href="{% url 'admin_view_product' product.id %}" 
+                <a href="{% url 'admin_product_detail' product.id %}" 
                    class="text-blue-500 hover:text-blue-600 text-xs flex items-center border border-blue-500 hover:border-blue-600 px-2 py-1 rounded">
                     <i class="fa fa-eye"></i>
                 </a>

@@ -115,3 +115,39 @@ class PaymentForm(forms.ModelForm):
 
     payment_message = forms.CharField(widget=forms.Textarea(attrs={'placeholder': '*165*S*12400 RWF transferred to ELIE......'}), required=False)
     payment_image = forms.ImageField(required=False)
+
+
+
+class AdvertisementForm(forms.ModelForm):
+    class Meta:
+        model = Advertisement
+        fields = ['title', 'image', 'link', 'start_date', 'end_date', 'active']
+
+    # Optional: Add validation to ensure start_date is before end_date
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        if start_date and end_date and start_date >= end_date:
+            raise forms.ValidationError("Start date must be before end date.")
+        return cleaned_data
+
+
+
+
+class NotificationForm(forms.ModelForm):
+    users = forms.ModelMultipleChoiceField(queryset=User.objects.all(), required=False)  # Allows selecting multiple users
+    for_all = forms.BooleanField(required=False)  # Checkbox to send notification to all users
+
+    class Meta:
+        model = Notification
+        fields = ['message', 'for_all', 'users']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Hide the users field if the notification is for all users
+        if self.instance and self.instance.for_all:
+            self.fields['users'].widget = forms.HiddenInput()  # Hide users field if for_all is True
+        else:
+            self.fields['users'].required = True  # Make users field required if not sending to all users

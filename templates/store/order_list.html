@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="container my-5">
     <h2 class="text-center mb-4">Your Orders</h2>
@@ -51,15 +51,15 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ item.quantity }}</td>
-                                    <td>{{ item.product.price }}</td>
-                                    <td>{{ item.subtotal }}</td>
+                                    <td>{{ item.product.price |intcomma }}</td>
+                                    <td>{{ item.subtotal|intcomma  }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
 
                     <div class="d-flex justify-content-between">
-                        <strong>Total: </strong><span>{{ order.total_price }} FRW</span>
+                        <strong>Total: </strong><span>{{ order.total_price |intcomma }} FRW</span>
                         <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-info btn-sm">View Details</a>
                     </div>
                 </div>

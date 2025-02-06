@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {%load static%}
-
+{% load humanize %}
 {% block title %}Payment for Order{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center mb-4">Submit Payment of <strong>{{ order.total_price }} RWF</strong> to <strong>641647</strong> Registered under <strong>Elie</strong></h2>
+    <h2 class="text-center mb-4">Submit Payment of <strong>{{ order.total_price |intcomma }} RWF</strong> to <strong>641647</strong> Registered under <strong>Elie</strong></h2>
 
     <div class="row">
         <!-- Left side: Payment Form -->
@@ -43,7 +43,7 @@
                     <h5 class="card-title mb-3">Pay via MoMo</h5>
                     <img src="{% static 'images/momo.jpg' %}" alt="MoMo Payment" class="img-fluid mb-4">
 
-                    <h6 class="mb-3">Amount to Pay: <strong>FRW {{ order.total_price }}</strong></h6>
+                    <h6 class="mb-3">Amount to Pay: <strong>FRW {{ order.total_price|intcomma  }}</strong></h6>
 
                     <p><strong>MoMo Code: 641647</strong></p>
                     <p>Registered under the name: <strong>Elie</strong></p>

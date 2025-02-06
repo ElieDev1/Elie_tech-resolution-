@@ -26,13 +26,12 @@ from django.http import HttpResponse
 from django.conf import settings
 
 
-
 def home(request):
     # Products with like counts (for the main grid)
     products_with_likes = Product.objects.annotate(likes_count=Count('likes')).order_by('-likes_count')
 
-    # All products (for the carousel)
-    all_products = Product.objects.all()
+    # 40 random products (for the carousel)
+    all_products = Product.objects.order_by('?')[:20]
 
     # Categories with product counts
     categories = Product.CATEGORY_CHOICES
@@ -43,7 +42,7 @@ def home(request):
 
     context = {
         'products_with_likes': products_with_likes,  # Key change
-        'all_products': all_products,
+        'all_products': all_products,  # Now shows 40 random products
         'categories': categories,
         'product_counts': product_counts,
     }
@@ -106,21 +105,27 @@ def register(request):
 
     return render(request, 'store/register.html')
 
-
 @csrf_exempt
 def login_user(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
+    next_url = request.GET.get('next', '')  # Capture 'next' parameter from URL
 
-        if user:
-            login(request, user)
-            return redirect('home')
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        next_url = request.POST.get('next', next_url)  # Preserve 'next' after form submission
+
+        if not username or not password:  # Check if fields are empty
+            messages.error(request, "Username and password are required!")
         else:
-            messages.error(request, "Invalid credentials!")
-    
-    return render(request, 'store/login.html')
+            user = authenticate(request, username=username, password=password)
+
+            if user:
+                login(request, user)
+                return redirect(next_url if next_url else 'home')  # Redirect to next or home
+            else:
+                messages.error(request, "Invalid credentials!")
+
+    return render(request, 'store/login.html', {"next": next_url})
 
 @csrf_exempt
 def logout_user(request):
@@ -140,11 +145,6 @@ def profile_view(request):
     customer = get_object_or_404(Customer, user=request.user)
     return render(request, 'profile.html', {'customer': customer})
 
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from .models import Order, Customer
 
 @login_required
 def order_list(request):
@@ -236,6 +236,9 @@ def product_list(request):
     }
 
     return render(request, 'store/product_list.html', context)
+
+
+
 
 @csrf_exempt
 def toggle_like(request, product_id):
@@ -467,14 +470,17 @@ def checkout(request):
     return render(request, 'store/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
 
 
+from django.urls import reverse
 
-@login_required
 @csrf_exempt
+@login_required(login_url='/login/')  # Redirect to login if not authenticated
 def process_checkout(request):
     cart = request.session.get('cart', {})
-    total_price = 0
 
-    # Create a new order
+    if not cart:  # If the cart is empty, redirect to the cart page
+        return redirect('cart_view')
+
+    total_price = 0
     order = Order.objects.create(customer=request.user.customer, total_price=total_price)
 
     for product_id, item_data in cart.items():
@@ -484,27 +490,19 @@ def process_checkout(request):
             subtotal = product.price * quantity
             total_price += subtotal
 
-            # Create OrderItem and add it to the order
             OrderItem.objects.create(order=order, product=product, quantity=quantity, subtotal=subtotal)
 
         except Product.DoesNotExist:
             continue  # Skip missing products
 
-    # Update the total price after adding all items
     order.total_price = total_price
     order.save()
 
-    # Clear the cart after the order is created
-    request.session['cart'] = {}
+    request.session['cart'] = {}  # Clear the cart after checkout
     request.session.modified = True
 
-    # Redirect to the order details page
-    return redirect('order_detail', order_id=order.id)
-
-
-
-
-
+    # Redirect to order details page after successful checkout
+    return redirect(reverse('order_detail', kwargs={'order_id': order.id}))
 
 
 
@@ -918,12 +916,19 @@ def admin_delete_message(request, message_id):
     return HttpResponseForbidden("Invalid request method.")  # Return an error for GET requests
 
 
-@staff_member_required  # Ensures only admin users can access this page
-def admin_view_product(request, product_id):
+
+
+@staff_member_required
+def admin_product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    return render(request, 'admin/view_product.html', {'product': product})
+    
+    # Find order items related to this product
+    order_items = OrderItem.objects.filter(product=product)
 
-
+    return render(request, "admin/admin_product_detail.html", {
+        "product": product,
+        "order_items": order_items
+    })
 
 
 
@@ -1375,3 +1380,124 @@ def custom_password_reset_form(request):
     else:
         form = PasswordResetForm()
     return render(request, 'registration/password_reset_form.html', {'form': form})
+
+# List all advertisements
+def advertisement_list(request):
+    advertisements = Advertisement.objects.all().order_by('-start_date')
+    return render(request, 'admin/advertisement_list.html', {'advertisements': advertisements})
+
+
+
+# Create a new advertisement
+def create_advertisement(request):
+    if request.method == 'POST':
+        form = AdvertisementForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Advertisement created successfully!")
+            return redirect('advertisement_list')
+    else:
+        form = AdvertisementForm()
+    return render(request, 'admin/advertisement_form.html', {'form': form})
+
+# Edit an existing advertisement
+def edit_advertisement(request, pk):
+    advertisement = get_object_or_404(Advertisement, pk=pk)
+    if request.method == 'POST':
+        form = AdvertisementForm(request.POST, request.FILES, instance=advertisement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Advertisement updated successfully!")
+            return redirect('advertisement_list')
+    else:
+        form = AdvertisementForm(instance=advertisement)
+    return render(request, 'admin/advertisement_form.html', {'form': form})
+
+# Delete an advertisement
+def delete_advertisement(request, pk):
+    advertisement = get_object_or_404(Advertisement, pk=pk)
+    advertisement.delete()
+    messages.success(request, "Advertisement deleted successfully!")
+    return redirect('advertisement_list')
+
+
+
+from .models import Notification
+
+# List all notifications
+def notification_list(request):
+    notifications = Notification.objects.all().order_by('-created_at')
+    return render(request, 'admin/notification_list.html', {'notifications': notifications})
+
+
+
+def create_notification(request):
+    if request.method == 'POST':
+        form = NotificationForm(request.POST)
+        if form.is_valid():
+            notification = form.save(commit=False)  # Do not save yet, we need to handle the many-to-many field
+            notification.save()  # Save to get an ID for the notification
+
+            # If 'for_all' is selected, assign all users
+            if form.cleaned_data['for_all']:
+                notification.user.set(User.objects.all())  # Assign all users to the notification
+            else:
+                selected_users = form.cleaned_data['users']
+                if selected_users:
+                    notification.user.set(selected_users)  # Assign selected users to the notification
+                else:
+                    form.add_error('users', 'Please select at least one user.')
+
+            notification.save()  # Save the notification with the assigned users
+
+            return redirect('notification_list')  # Redirect after saving the notification
+    else:
+        form = NotificationForm()
+
+    return render(request, 'admin/notification_form.html', {'form': form})
+
+ 
+
+
+
+
+
+
+def edit_notification(request, pk):
+    notification = get_object_or_404(Notification, pk=pk)  # Get the notification to edit
+    
+    if request.method == 'POST':
+        form = NotificationForm(request.POST, instance=notification)
+        
+        if form.is_valid():
+            notification = form.save(commit=False)  # Don't save yet; we need to handle related fields
+
+            # If the "Send to All Users" checkbox is selected, assign all users
+            if form.cleaned_data['for_all']:
+                notification.user.set(User.objects.all())  # Assign all users to this notification
+            else:
+                # If specific users are selected, set them
+                selected_users = form.cleaned_data['users']
+                notification.user.set(selected_users)  # Assign specific users to the notification
+            
+            notification.save()  # Save the notification with updated users
+
+            messages.success(request, "Notification updated successfully!")  # Success message
+            return redirect('notification_list')  # Redirect to the notification list page
+    else:
+        # Pre-fill the form with the existing notification data
+        form = NotificationForm(instance=notification)
+    
+    return render(request, 'admin/notification_form.html', {'form': form})
+
+
+# Delete a notification
+def delete_notification(request, pk):
+    notification = get_object_or_404(Notification, pk=pk)
+    notification.delete()
+    messages.success(request, "Notification deleted successfully!")
+    return redirect('notification_list')
+
+
+
+

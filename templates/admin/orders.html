@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-
+{% load humanize %}
 {% block content %}
     <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
         <h2 class="text-3xl font-bold mb-6 text-gray-800">Order Management</h2>
@@ -75,7 +75,7 @@
                                 ⚠️ Pending
                             </span>
                         {% endif %}
-                        <strong>{{ order.total_price }} RWF</strong>
+                        <strong>{{ order.total_price |intcomma }} RWF</strong>
                     </div>
             
                     <div class="bg-white shadow-md rounded-lg p-4 border border-gray-300">
