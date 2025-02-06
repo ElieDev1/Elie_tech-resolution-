@@ -124,6 +124,13 @@ class TeamMember(models.Model):
         ('DEV', 'Software Developer'),
         ('DESIGNER', 'UI/UX Designer'),
         ('SUPPORT', 'Customer Support'),
+        ('agent', 'Agent'),
+        ('MARKETING', 'Marketing Specialist'),
+        ('HR', 'Human Resource Manager'),
+        ('FINANCE', 'Finance Manager'),
+        ('OTHER', 'Other'),
+        
+
     ]
 
     name = models.CharField(max_length=100)
