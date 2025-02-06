@@ -104,7 +104,9 @@ urlpatterns = [
     path('notifications/', views.notification_list, name='notification_list'),
     path('notifications/create/', views.create_notification, name='create_notification'),
     path('notifications/edit/<int:pk>/', views.edit_notification, name='edit_notification'),
+    
     path('notifications/delete/<int:pk>/', views.delete_notification, name='delete_notification'),
+    path('notifications/delete-selected/', views.delete_selected_notifications, name='delete_selected_notifications'),
     
    
 

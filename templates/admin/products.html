@@ -1,46 +1,77 @@
 {% extends 'admin/base.html' %}
 {% load humanize %}
+
 {% block content %}
 <div class="bg-white rounded-lg shadow-md p-6">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Product Management</h2>
-        <a href="{% url 'admin_add_product' %}" 
-           class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        <a href="{% url 'admin_add_product' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             Add New Product
         </a>
     </div>
 
+    <!-- FILTER FORM -->
+    <form method="GET" class="mb-4 flex flex-wrap gap-2 bg-gray-100 p-4 rounded-md shadow">
+        <select name="category" class="border px-3 py-2 rounded w-48">
+            <option value="">All Categories</option>
+            {% for value, label in categories %}
+                <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <input type="date" name="start_date" value="{{ start_date|default:'' }}" class="border px-3 py-2 rounded">
+        <input type="date" name="end_date" value="{{ end_date|default:'' }}" class="border px-3 py-2 rounded">
+
+        <label class="flex items-center">
+            <input type="checkbox" name="out_of_stock" value="1" {% if out_of_stock == '1' %}checked{% endif %} class="mr-2">
+            Out of Stock
+        </label>
+
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            Apply Filters
+        </button>
+    </form>
+
+    <!-- PRODUCT LIST -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {% for product in products %}
         <div class="bg-gray-100 p-2 rounded-lg shadow flex flex-col items-center">
-            <img src="{{ product.main_image }}" 
-                 class="w-24 h-24 object-cover rounded mb-2" 
-                 alt="{{ product.name }}">
+            <img src="{{ product.main_image }}" class="w-24 h-24 object-cover rounded mb-2" alt="{{ product.name }}">
             <h3 class="text-sm font-semibold text-center">{{ product.name }}</h3>
-            <p class="text-gray-700 text-xs">Price: RWF{{ product.price |intcomma }}</p>
-            <p class="text-gray-700 text-xs">Stock: {{ product.stock|intcomma  }}</p>
-           
+            <p class="text-gray-700 text-xs">Price: RWF{{ product.price | intcomma }}</p>
+            <p class="text-gray-700 text-xs {% if product.stock == 0 %}text-red-500{% endif %}">
+                Stock: {{ product.stock | intcomma }}
+            </p>
+
             <div class="flex space-x-2 mt-2 w-full justify-center">
-                <a href="{% url 'admin_product_detail' product.id %}" 
-                   class="text-blue-500 hover:text-blue-600 text-xs flex items-center border border-blue-500 hover:border-blue-600 px-2 py-1 rounded">
+                <a href="{% url 'admin_product_detail' product.id %}" class="text-blue-500 hover:text-blue-600 text-xs flex items-center border border-blue-500 hover:border-blue-600 px-2 py-1 rounded">
                     <i class="fa fa-eye"></i>
                 </a>
                 
-                <a href="{% url 'admin_edit_product' product.id %}" 
-                   class="text-yellow-500 hover:text-yellow-600 text-xs flex items-center border border-yellow-500 hover:border-yellow-600 px-2 py-1 rounded">
+                <a href="{% url 'admin_edit_product' product.id %}" class="text-yellow-500 hover:text-yellow-600 text-xs flex items-center border border-yellow-500 hover:border-yellow-600 px-2 py-1 rounded">
                     <i class="fa fa-edit"></i>
                 </a>
                 
-                <a href="{% url 'admin_delete_product' product.id %}" 
-                   class="text-red-500 hover:text-red-600 text-xs flex items-center border border-red-500 hover:border-red-600 px-2 py-1 rounded">
-                    <i class="fa fa-trash"></i>
-                </a>
+                <form method="post" action="{% url 'admin_delete_product' product.id %}" onsubmit="return confirmDelete('{{ product.name }}')">
+                    {% csrf_token %}  
+                    <button type="submit" class="text-red-500 hover:text-red-600 text-xs flex items-center border border-red-500 hover:border-red-600 px-2 py-1 rounded">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </form>  
             </div>
-            
         </div>
         {% empty %}
-        <p class="text-gray-500 col-span-full text-center">No products available.</p>
+        <p class="text-gray-500 col-span-full text-center">No products found with the applied filters.</p>
         {% endfor %}
     </div>
 </div>
+
+<script>
+function confirmDelete(productName) {
+    return confirm(`Are you sure you want to delete the product: "${productName}"? This action cannot be undone.`);
+}
+</script>
+
 {% endblock %}

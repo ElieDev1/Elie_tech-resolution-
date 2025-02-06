@@ -630,29 +630,41 @@ def unread_message_count(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+from django.utils.dateparse import parse_date  # ✅ Import parse_date
 
 @staff_member_required
 def admin_products(request):
     products = Product.objects.all().prefetch_related('product_images')
-    return render(request, 'admin/products.html', {'products': products})
 
+    # Get filter values from request
+    category = request.GET.get('category', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    out_of_stock = request.GET.get('out_of_stock', '')
 
+    # Apply category filter
+    if category:
+        products = products.filter(category=category)
+
+    # Apply date range filter
+    if start_date and end_date:
+        start_date = parse_date(start_date)  # ✅ This will now work
+        end_date = parse_date(end_date)
+        if start_date and end_date:
+            products = products.filter(created_at__range=[start_date, end_date])
+
+    # Apply out-of-stock filter
+    if out_of_stock == '1':
+        products = products.filter(stock=0)
+
+    return render(request, 'admin/products.html', {
+        'products': products,
+        'categories': Product.CATEGORY_CHOICES,
+        'selected_category': category,
+        'start_date': start_date,
+        'end_date': end_date,
+        'out_of_stock': out_of_stock
+    })
 
 
 
@@ -773,14 +785,30 @@ def edit_product(request, pk):
         form = ProductForm(instance=product)
     return render(request, 'admin/product_form.html', {'form': form})
 
+
+
 @staff_member_required
 @csrf_exempt
 def delete_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
+
     if request.method == 'POST':
-        product.delete()
-        messages.success(request, 'Product deleted successfully!')
-    return redirect('admin_products')
+        try:
+            product.delete()
+            messages.success(request, 'Product deleted successfully!')
+            return redirect('admin_products')  # Redirect on successful DELETE
+
+        except Exception as e:
+            messages.error(request, f'Error deleting product: {e}')
+            return redirect('admin_products')  # Redirect even on error
+
+    elif request.method == 'GET':  # Explicitly handle GET requests
+        messages.warning(request, "Cannot delete product via GET request. Use POST.")
+        return redirect('admin_products')  # Redirect on GET
+
+    else: # Handle other request methods (PUT, DELETE, etc.) if needed.
+        messages.warning(request, "Invalid request method.")
+        return redirect('admin_products')
 
 # Team Member Views
 @staff_member_required
@@ -1099,14 +1127,21 @@ def approve_payment(request, order_id):
 
 
 
-
-
-
 @staff_member_required
 def admin_comment_list(request):
-    comments = Comment.objects.all().order_by('-timestamp')  # Use Comment, not comment
-    return render(request, 'admin/comments_list.html', {'comments': comments})
+    product_id = request.GET.get('product_id')  # Get product ID from query parameters
+    comments = Comment.objects.all().order_by('-timestamp')  # Default: all comments
 
+    if product_id:
+        comments = comments.filter(product_id=product_id)  # Filter by selected product
+
+    products = Product.objects.all()  # Get all products for dropdown filter
+
+    return render(request, 'admin/comments_list.html', {
+        'comments': comments,
+        'products': products,
+        'selected_product_id': product_id
+    })
 
 
 
@@ -1440,60 +1475,65 @@ def create_notification(request):
     if request.method == 'POST':
         form = NotificationForm(request.POST)
         if form.is_valid():
-            notification = form.save(commit=False)  # Do not save yet, we need to handle the many-to-many field
-            notification.save()  # Save to get an ID for the notification
+            notification = form.save(commit=False)  # Save notification without committing to DB
+            notification.save()  # Save to get an ID
 
-            # If 'for_all' is selected, assign all users
-            if form.cleaned_data['for_all']:
-                notification.user.set(User.objects.all())  # Assign all users to the notification
+            # Handle recipient selection
+            if form.cleaned_data.get('for_all_customers'):
+                notification.user.set(User.objects.filter(is_staff=False))  # Assign to non-staff users (customers)
+            elif form.cleaned_data.get('for_all_staff'):
+                notification.user.set(User.objects.filter(is_staff=True))  # Assign to staff members
             else:
-                selected_users = form.cleaned_data['users']
+                selected_users = form.cleaned_data.get('users')
                 if selected_users:
-                    notification.user.set(selected_users)  # Assign selected users to the notification
+                    notification.user.set(selected_users)  # Assign only selected users
                 else:
-                    form.add_error('users', 'Please select at least one user.')
+                    form.add_error('users', 'Please select at least one recipient.')
 
-            notification.save()  # Save the notification with the assigned users
-
-            return redirect('notification_list')  # Redirect after saving the notification
+            notification.save()  # Save the notification with assigned users
+            return redirect('notification_list')  # Redirect after saving
     else:
         form = NotificationForm()
 
     return render(request, 'admin/notification_form.html', {'form': form})
-
- 
-
-
-
-
 
 
 def edit_notification(request, pk):
     notification = get_object_or_404(Notification, pk=pk)  # Get the notification to edit
     
     if request.method == 'POST':
-        form = NotificationForm(request.POST, instance=notification)
+        form = NotificationForm(request.POST, instance=notification)  # Pre-fill the form with existing data
         
         if form.is_valid():
-            notification = form.save(commit=False)  # Don't save yet; we need to handle related fields
-
-            # If the "Send to All Users" checkbox is selected, assign all users
-            if form.cleaned_data['for_all']:
+            notification = form.save(commit=False)  # Don't save yet; we'll handle related fields manually
+            
+            # Safely check for the 'for_all' field in the cleaned data
+            for_all = form.cleaned_data.get('for_all', False)  # Default to False if not present
+            if for_all:
                 notification.user.set(User.objects.all())  # Assign all users to this notification
             else:
-                # If specific users are selected, set them
-                selected_users = form.cleaned_data['users']
-                notification.user.set(selected_users)  # Assign specific users to the notification
-            
-            notification.save()  # Save the notification with updated users
+                # If specific users are selected, assign them
+                selected_users = form.cleaned_data.get('users', [])
+                if selected_users:
+                    notification.user.set(selected_users)  # Assign specific users
+                else:
+                    notification.user.clear()  # Clear users if none are selected
+
+            notification.save()  # Save the notification after assigning users
 
             messages.success(request, "Notification updated successfully!")  # Success message
             return redirect('notification_list')  # Redirect to the notification list page
+
     else:
-        # Pre-fill the form with the existing notification data
+        # For GET requests, load the form with existing data
         form = NotificationForm(instance=notification)
-    
+
     return render(request, 'admin/notification_form.html', {'form': form})
+
+
+
+
+
 
 
 # Delete a notification
@@ -1504,5 +1544,15 @@ def delete_notification(request, pk):
     return redirect('notification_list')
 
 
+# Bulk delete notifications
+def delete_selected_notifications(request):
+    if request.method == "POST":
+        notification_ids = request.POST.getlist('notification_ids')  # Get selected notification IDs
+        if notification_ids:
+            Notification.objects.filter(id__in=notification_ids).delete()  # Delete selected notifications
+            messages.success(request, "Selected notifications deleted successfully!")
+        else:
+            messages.warning(request, "No notifications selected!")
 
+    return redirect('notification_list')  # Redirect back to list
 

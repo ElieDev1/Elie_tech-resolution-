@@ -133,21 +133,16 @@ class AdvertisementForm(forms.ModelForm):
         return cleaned_data
 
 
-
-
 class NotificationForm(forms.ModelForm):
-    users = forms.ModelMultipleChoiceField(queryset=User.objects.all(), required=False)  # Allows selecting multiple users
-    for_all = forms.BooleanField(required=False)  # Checkbox to send notification to all users
+    for_all_customers = forms.BooleanField(required=False, label="Send to All Customers (Non-Staff)")
+    for_all_staff = forms.BooleanField(required=False, label="Send to All Staff")
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False,
+        label="Select Specific Users"
+    )
 
     class Meta:
         model = Notification
-        fields = ['message', 'for_all', 'users']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Hide the users field if the notification is for all users
-        if self.instance and self.instance.for_all:
-            self.fields['users'].widget = forms.HiddenInput()  # Hide users field if for_all is True
-        else:
-            self.fields['users'].required = True  # Make users field required if not sending to all users
+        fields = ['message', 'for_all_customers', 'for_all_staff', 'users']

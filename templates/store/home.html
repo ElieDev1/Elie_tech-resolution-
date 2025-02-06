@@ -77,7 +77,8 @@
         <div class="col-md-3">
             <h5>Categories</h5>
             <div class="category-card">
-                <ul class="list-group mb-4 category-list">
+                <ul class="list-group mb-4 category-list 
+                    max-h-48 overflow-y-auto lg:max-h-full">
                     <li class="list-group-item {% if not request.GET.category %}active{% endif %}">
                         <a href="{% url 'product_list' %}" class="text-decoration-none">All Categories</a>
                     </li>
@@ -89,6 +90,7 @@
                 </ul>
             </div>
         </div>
+        
 
         <div class="col-md-9">
             <div class="row">

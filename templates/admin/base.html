@@ -1,34 +1,35 @@
-{%load static%}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Admin Panel</title>
-    
+
         <!-- Favicon (x-icon) -->
         <link rel="icon" type="image/x-icon" href="{% static 'icons/logo.jpg' %}">
-    
+
         <!-- Logo for social media sharing and other use cases -->
         <meta property="og:image" content="{% static 'icons/logo.jpg' %}">
-    
+
         <!-- Tailwind CSS -->
         <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
+
         <!-- Font Awesome -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+
         <!-- Bootstrap CSS CDN -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
         <!-- Bootstrap JS CDN (for interactive components) -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
+
         <script defer>
             function toggleSidebar() {
+                // Toggles the sidebar visibility on small screens
                 document.getElementById("sidebar").classList.toggle("hidden");
             }
-    
+
             function setActiveLink() {
                 let links = document.querySelectorAll(".nav-link");
                 links.forEach(link => {
@@ -39,73 +40,76 @@
                     }
                 });
             }
-    
+
             document.addEventListener("DOMContentLoaded", setActiveLink);
         </script>
     </head>
-    
-</head>
-<body class="bg-gray-100">
-<!-- Top Navbar -->
-<nav class="bg-gray-700 text-white p-4 w-full fixed top-0 left-0 z-50 h-16 flex items-center justify-between">
-    <button class="lg:hidden text-white text-2xl px-4" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-    <span class="text-xl font-bold">Elie Tech</span>
-    
-    <!-- Search Form -->
-    <form class="hidden lg:flex flex-1 mx-4 justify-center" method="GET" action="{% url 'admin_search' %}">
-        <div class="flex w-full max-w-xs">
-            <input type="text" name="query" class="w-full h-8 p-2 rounded-l-full text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                   placeholder="What are you looking for?" value="{{ query }}" required>
-            <button type="submit" class="bg-blue-500 w-20 h-8 rounded-r-full text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out flex items-center justify-center">
-                <i class="fas fa-search"></i>
+
+    <body class="bg-gray-100">
+        <!-- Top Navbar -->
+        <nav class="bg-gray-700 text-white p-4 w-full fixed top-0 left-0 z-50 h-16 flex items-center justify-between">
+            <!-- Sidebar toggle button for small screens -->
+            <button class="lg:hidden text-white text-2xl px-4" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
             </button>
-        </div>
-    </form>
-    
-    
+            <span class="text-xl font-bold">Elie Tech</span>
 
-    <div class="hidden lg:flex space-x-6">
-        <a href="{% url 'admin_dashboard' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Dashboard</a>
-        <a href="{% url 'admin_products' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Products</a>
-        <a href="{% url 'admin_orders' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Orders</a>
-        <a href="{% url 'admin_users' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Users</a>
-        <a href="{% url 'admin_messages' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Messages</a>
-        <a href="{% url 'admin_team' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Team</a>
-        <a href="{% url 'product_list' %}" class="nav-link px-4 py-2 text-yellow-400 hover:bg-gray-600">Site</a>
-    </div>
-</nav>
+            <!-- Search Form -->
+            <form class="hidden lg:flex flex-1 mx-4 justify-center" method="GET" action="{% url 'admin_search' %}">
+                <div class="flex w-full max-w-xs">
+                    <input type="text" name="query" class="w-full h-8 p-2 rounded-l-full text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           placeholder="What are you looking for?" value="{{ query }}" required>
+                    <button type="submit" class="bg-blue-500 w-20 h-8 rounded-r-full text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out flex items-center justify-center">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
 
-    <!-- Sidebar -->
-    <div id="sidebar" class="w-48 bg-gray-800 text-white min-h-screen fixed left-0 top-0 mt-16 lg:block z-40">
-        <div class="p-4"><strong>Admin Panel</strong></div>
-        <div class="px-4">
-            <a href="{% url 'admin_dashboard' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Dashboard</a>
-            <a href="{% url 'admin_products' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Products</a>
-            <a href="{% url 'admin_orders' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Orders</a>
-            <a href="{% url 'admin_users' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Users</a>
-            <a href="{% url 'admin_messages' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Messages</a>
-            <a href="{% url 'notification_list' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Notification</a>
-            <a href="{% url 'advertisement_list' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Advertisement</a>
-            <a href="{% url 'admin_comment_list' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Comments</a>
-            <a href="{% url 'admin_team' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Team</a>
-            <a href="{% url 'product_list' %}" class="nav-link block py-2 px-4 text-yellow-400 hover:bg-gray-700">Site</a>
-        </div>
-    </div>
-    <div class="lg:ml-48 p-4 pt-20 mt-16">
-    <div class="container mx-auto">
-        {% if messages %}
-            <div style="max-height: 50px; overflow-y: auto;">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+            <!-- Navbar Links (hidden on small screens) -->
+            <div class="hidden lg:flex space-x-6">
+                <a href="{% url 'admin_dashboard' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Dashboard</a>
+                <a href="{% url 'admin_products' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Products</a>
+                <a href="{% url 'admin_orders' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Orders</a>
+                <a href="{% url 'admin_users' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Users</a>
+                <a href="{% url 'admin_messages' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Messages</a>
+                <a href="{% url 'admin_team' %}" class="nav-link px-4 py-2 hover:bg-gray-600">Team</a>
+                <a href="{% url 'product_list' %}" class="nav-link px-4 py-2 text-yellow-400 hover:bg-gray-600">Site</a>
             </div>
-       {% endif %}
-    
-        {% block content %}
-        {% endblock %}
-    </div>
-</div>
+        </nav>
+
+        <!-- Sidebar (hidden on small screens by default) -->
+        <div id="sidebar" class="w-48 bg-gray-800 text-white min-h-screen fixed left-0 top-0 mt-16 lg:block hidden z-40">
+            <div class="p-4"><strong>Admin Panel</strong></div>
+            <div class="px-4">
+                <a href="{% url 'admin_dashboard' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Dashboard</a>
+                <a href="{% url 'admin_products' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Products</a>
+                <a href="{% url 'admin_orders' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Orders</a>
+                <a href="{% url 'admin_users' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Users</a>
+                <a href="{% url 'admin_messages' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Messages</a>
+                <a href="{% url 'notification_list' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Notification</a>
+                <a href="{% url 'advertisement_list' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Advertisement</a>
+                <a href="{% url 'admin_comment_list' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Comments</a>
+                <a href="{% url 'admin_team' %}" class="nav-link block py-2 px-4 hover:bg-gray-700">Team</a>
+                <a href="{% url 'product_list' %}" class="nav-link block py-2 px-4 text-yellow-400 hover:bg-gray-700">Site</a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:ml-48 p-4 pt-20 mt-16">
+            <div class="container mx-auto">
+                {% if messages %}
+                    <div style="max-height: 50px; overflow-y: auto;">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </body>
+</html>

@@ -10,7 +10,7 @@
 <div class="message-layout">
     <!-- Customer List -->
     <div class="customer-list">
-        <h4><strong>CUSTOMERS :</strong></h4>
+        <h4><strong> {%if user.is_staff%}CUSTOMERS :{% else %}CHAT WITH :{% endif %}</strong></h4>
         <div class="customer-scroll">
             <ul>
                 {% for customer in customers_who_messaged %}

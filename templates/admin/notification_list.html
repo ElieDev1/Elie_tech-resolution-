@@ -1,30 +1,58 @@
 {% extends 'admin/base.html' %}
+
 {% block content %}
     <h2>Manage Notifications</h2>
     <a href="{% url 'create_notification' %}" class="btn btn-primary">Create Notification</a>
-    <table class="table mt-3">
-        <thead>
-            <tr>
-                <th>Message</th>
-                <th>For All Customers</th>
-                <th>Created At</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for notification in notifications %}
+
+    <form method="post" action="{% url 'delete_selected_notifications' %}" onsubmit="return confirmDeletion()">
+        {% csrf_token %}
+        <table class="table mt-3">
+            <thead>
                 <tr>
-                    <td>{{ notification.message }}</td>
-                    <td>{% if notification.for_all %}Yes{% else %}No{% endif %}</td>
-                    <td>{{ notification.created_at }}</td>
-                    <td>{{ notification.read }}</td>
-                    <td>
-                        <a href="{% url 'edit_notification' notification.pk %}" class="btn btn-warning btn-sm">Edit</a>
-                        <a href="{% url 'delete_notification' notification.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
-                    </td>
+                    <th><input type="checkbox" id="select-all"></th>  <!-- Select all checkbox -->
+                    <th>Message</th>
+                    <th>For All Customers</th>
+                    <th>Created At</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for notification in notifications %}
+                    <tr>
+                        <td><input type="checkbox" name="notification_ids" value="{{ notification.pk }}"></td>
+                        <td>{{ notification.message|slice:":50" }}{% if notification.message|length > 50 %}...{% endif %}</td>
+                        <td>{% if notification.for_all %}Yes{% else %}No{% endif %}</td>
+                        <td>{{ notification.created_at }}</td>  
+                        <td>{% if notification.read_by.count > 0 %} Read {% else %} Unread {% endif %}</td>
+                        <td>
+                            <a href="{% url 'edit_notification' notification.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="{% url 'delete_notification' notification.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+
+        <button type="submit" class="btn btn-danger mt-2">Delete Selected</button>
+    </form>
+
+    <script>
+        // Select all checkboxes functionality
+        document.getElementById("select-all").addEventListener("change", function () {
+            let checkboxes = document.querySelectorAll("input[name='notification_ids']");
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
+
+        // Ensure at least one notification is selected before submitting the form
+        function confirmDeletion() {
+            let selectedNotifications = document.querySelectorAll("input[name='notification_ids']:checked");
+            if (selectedNotifications.length === 0) {
+                alert('Please select at least one notification to delete.');
+                return false;  // Prevent form submission
+            }
+            return confirm('Are you sure you want to delete the selected notifications?');
+        }
+    </script>
 {% endblock %}
