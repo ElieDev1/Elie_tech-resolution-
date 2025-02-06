@@ -139,11 +139,16 @@ def logout_user(request):
 
 
 
-# Profile View
+
 @login_required
 def profile_view(request):
     customer = get_object_or_404(Customer, user=request.user)
-    return render(request, 'profile.html', {'customer': customer})
+
+    # Fetch all orders related to the customer, including order items and product details
+    orders = Order.objects.filter(customer=customer).prefetch_related('order_items__product')
+
+    return render(request, 'profile.html', {'customer': customer, 'orders': orders})
+
 
 
 @login_required
@@ -507,109 +512,101 @@ def process_checkout(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ---------------------------------------------------------------
-# Message Page View
-# ---------------------------------------------------------------
-@csrf_exempt
 def message_page(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-
-    # Get users who sent or received messages from the current user
-    customers_who_messaged = None
-    if request.user.is_staff:
-        customers_who_messaged = User.objects.filter(
-            Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
-        ).distinct()
-
-    # Get all messages for the current user
+    # Your logic to fetch messages
     all_messages = Message.objects.filter(
         Q(recipient=request.user) | Q(sender=request.user)
     ).order_by('timestamp')
 
+    # Fetch customers who have messaged the current user
+    customers_who_messaged = User.objects.filter(
+        Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
+    ).distinct()
+
+    # Prepare unread message count for each customer
+    unread_messages_per_customer = {}
+    for customer in customers_who_messaged:
+        unread_count = customer.received_messages.filter(is_read=False).count()
+        unread_messages_per_customer[customer.id] = unread_count
+
     return render(request, 'message.html', {
         'all_messages': all_messages,
-        'admins': User.objects.filter(is_staff=True),
         'customers_who_messaged': customers_who_messaged,
+        'unread_messages_per_customer': unread_messages_per_customer,
         'selected_customer': None,
     })
 
-# ---------------------------------------------------------------
-# Chat with Customer View (Mark messages as read here)
-# ---------------------------------------------------------------
+
 @csrf_exempt
+@login_required
 def chat_with_customer(request, customer_id):
+    """Handles chat view ensuring customers can only chat with staff."""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect("login")
 
     customer = get_object_or_404(User, id=customer_id)
 
-    # MARK MESSAGES AS READ WHEN CHAT IS OPENED
-    # Update all messages from this customer to the current user as read
+    # Ensure customers cannot chat with each other
+    if not request.user.is_staff and not customer.is_staff:
+        return redirect("messages")  # Redirect if both users are customers
+
+    # Mark messages as read when chat is opened
     Message.objects.filter(
         sender=customer,
         recipient=request.user,
-        is_read=False  # Only mark unread messages
+        is_read=False
     ).update(is_read=True)
 
-    # Get messages between current user and selected customer
+    # Get messages between current user and selected customer/staff
     all_messages = Message.objects.filter(
         (Q(sender=request.user) & Q(recipient=customer)) |
         (Q(sender=customer) & Q(recipient=request.user))
-    ).order_by('timestamp')
+    ).order_by("timestamp")
 
-    # Get users who sent or received messages from the current user
+    # Get list of users who interacted with the current user
     customers_who_messaged = None
     if request.user.is_staff:
         customers_who_messaged = User.objects.filter(
             Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
         ).distinct()
 
-    return render(request, 'message.html', {
-        'all_messages': all_messages,
-        'admins': User.objects.filter(is_staff=True),
-        'customers_who_messaged': customers_who_messaged,
-        'selected_customer': customer,
+    return render(request, "message.html", {
+        "all_messages": all_messages,
+        "admins": User.objects.filter(is_staff=True),  # Only staff members
+        "customers_who_messaged": customers_who_messaged,
+        "selected_customer": customer,
     })
 
-# ---------------------------------------------------------------
-# Send Message View (Mark previous messages as read when replying)
-# ---------------------------------------------------------------
-@csrf_exempt
-def send_message(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
 
-    if request.method == 'POST':
-        recipient_id = request.POST.get('recipient')
-        content = request.POST.get('content', '').strip()
-        image = request.FILES.get('image')
+
+@csrf_exempt
+@login_required
+def send_message(request):
+    """Handles sending messages while ensuring customers chat only with staff."""
+    if request.method == "POST":
+        recipient_id = request.POST.get("recipient")
+        content = request.POST.get("content", "").strip()
+        image = request.FILES.get("image")
+
+        # Ensure recipient ID is provided
+        if not recipient_id:
+            return redirect("messages")
+
+        recipient = get_object_or_404(User, id=recipient_id)
+
+        # Prevent customers from chatting with other customers
+        if not request.user.is_staff and not recipient.is_staff:
+            return redirect("messages")  # Customers can only chat with staff
 
         if content or image:
-            recipient = get_object_or_404(User, id=recipient_id)
-
-            # MARK PREVIOUS MESSAGES AS READ WHEN REPLYING
-            # Update all unread messages from the recipient to the current user
+            # Mark unread messages from recipient as read
             Message.objects.filter(
                 sender=recipient,
                 recipient=request.user,
                 is_read=False
             ).update(is_read=True)
 
-            # Create the new message
+            # Create and save the new message
             Message.objects.create(
                 sender=request.user,
                 recipient=recipient,
@@ -617,22 +614,19 @@ def send_message(request):
                 image=image
             )
 
-    return redirect('messages')
+    return redirect("messages")
 
-# ---------------------------------------------------------------
-# Context Processor (Unread Message Count)
-# ---------------------------------------------------------------
-@csrf_exempt
+
+
 def unread_message_count(request):
-    unread_count = 0
+    """Returns the count of unread messages for the logged-in user."""
     if request.user.is_authenticated:
-        # Count messages where the user is the recipient and is_read=False
-        unread_count = Message.objects.filter(
-            recipient=request.user,
-            is_read=False
-        ).count()
-    return {'unread_message_count': unread_count}
-
+        return {
+            "unread_message_count": Message.objects.filter(
+                recipient=request.user, is_read=False
+            ).count()
+        }
+    return {"unread_message_count": 0}
 
 
 
@@ -663,20 +657,20 @@ def admin_products(request):
 
 
 
-
-
 @staff_member_required
 def admin_orders(request):
-    # Get current date for "Today" filter
     today = timezone.now().date()
-
-    # Filter by status or today's orders
+    
+    # Get filter parameters from request
     status_filter = request.GET.get('status', None)
+    delivery_status_filter = request.GET.get('delivery_status', None)
     date_filter = request.GET.get('date', None)
+    start_date = request.GET.get('start_date', None)
+    end_date = request.GET.get('end_date', None)
 
-    # Use prefetch_related to fetch related products via OrderItem
+    # Optimize query with select_related & prefetch_related
     orders = Order.objects.prefetch_related(
-        'order_items__product'  # Prefetch related products through the order_items relation
+        'order_items__product'  # Prefetch related products
     ).select_related(
         'customer__user'  # Select related customer and user data
     )
@@ -685,13 +679,20 @@ def admin_orders(request):
     if status_filter:
         orders = orders.filter(payment_status=status_filter)
 
+    if delivery_status_filter:
+        orders = orders.filter(delivery_status=delivery_status_filter)
+
     if date_filter == 'today':
         orders = orders.filter(ordered_at__date=today)
 
-    # Order by the ordered_at field in descending order (newest first)
+    if start_date and end_date:
+        orders = orders.filter(ordered_at__date__range=[start_date, end_date])
+
+    # Order by newest orders first
     orders = orders.order_by('-ordered_at')
 
     return render(request, 'admin/orders.html', {'orders': orders})
+
 
 
 
@@ -1097,13 +1098,17 @@ def approve_payment(request, order_id):
 
 
 
-from django.contrib.admin.views.decorators import staff_member_required
+
+
 
 
 @staff_member_required
 def admin_comment_list(request):
     comments = Comment.objects.all().order_by('-timestamp')  # Use Comment, not comment
     return render(request, 'admin/comments_list.html', {'comments': comments})
+
+
+
 
 @staff_member_required
 def admin_view_comment(request, comment_id):

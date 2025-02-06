@@ -4,14 +4,9 @@ register = template.Library()
 
 @register.filter
 def get_item(dictionary, key):
-    # Ensure the key is a string (matching the cart dictionary keys)
-    return dictionary.get(str(key), 0)
-
-@register.filter
-def mul(value, arg):
+    # Try to fetch the key as an integer if possible, then fall back to string
     try:
-        # Convert both value and arg to float before multiplication
-        return float(value) * float(arg)
+        key = int(key)  # Attempt to convert to integer
     except (ValueError, TypeError):
-        # Return 0 if conversion fails (e.g., empty string or invalid input)
-        return 0
+        pass  # Keep the original key if conversion fails
+    return dictionary.get(key, 0)

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Messages{% endblock %}
 
@@ -7,46 +8,57 @@
 <h2 class="page-title">Messages</h2>
 
 <div class="message-layout">
-    <!-- Display list of customers for staff -->
-    {% if request.user.is_staff %}
+    <!-- Customer List -->
     <div class="customer-list">
-        <h4>Customers who messaged you:</h4>
+        <h4><strong>CUSTOMERS :</strong></h4>
         <div class="customer-scroll">
             <ul>
                 {% for customer in customers_who_messaged %}
                 <li>
-                    <a href="{% url 'chat_with_customer' customer.id %}" class="{% if selected_customer and selected_customer.id == customer.id %}active{% endif %}">
+                    <a href="{% url 'chat_with_customer' customer.id %}" 
+                       class="{% if selected_customer and selected_customer.id == customer.id %}active{% endif %}">
+                        
+                        <!-- Profile Picture or Default Icon -->
                         {% if customer.customer and customer.customer.profile_picture %}
-                            <img src="{{ customer.customer.profile_picture.url }}" alt="{{ customer.username }}'s Profile" class="customer-img">
+                            <img src="{{ customer.customer.profile_picture.url }}" 
+                                 alt="{{ customer.username }}'s Profile" class="customer-img">
                         {% else %}
                             <i class="fa fa-user-circle" style="font-size: 40px;"></i>
                         {% endif %}
+                        
                         <span class="customer-name">{{ customer.username }}</span>
-                        <!-- Unread message badge -->
-                        {% if customer.unread_count > 0 %}
-                            <span class="unread-badge">{{ customer.unread_count }}</span>
-                        {% endif %}
+
+                        <!-- Unread Message Indicator (Blue Dot) -->
+                        {% with unread_count=unread_messages_per_customer|get_item:customer.id %}
+                            {% if unread_count == 0 %}
+                                <span class="text-blue-500">●</span> <!-- Blue dot for unread messages -->
+                            {% endif %}
+                        {% endwith %}
                     </a>
                 </li>
                 {% endfor %}
             </ul>
         </div>
     </div>
-    {% endif %}
 
-    <!-- Chat section -->
+    <!-- Chat Section -->
     <div class="chat-container">
+        <!-- Chat Header -->
         <div class="chat-header">
             <h3>
                 {% if selected_customer %}
                     Chat with {{ selected_customer.username }}
                 {% else %}
-                    Chat with customer service
+                    {% if request.user.is_staff %}
+                        <strong>CUSTOMER SERVICE CENTER</strong>
+                    {% else %}
+                        Chat with customer service
+                    {% endif %}
                 {% endif %}
             </h3>
         </div>
 
-        <!-- Chat messages -->
+        <!-- Chat Messages -->
         <div class="chat-messages" id="chatBox">
             {% for message in all_messages %}
                 <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
@@ -57,16 +69,16 @@
                             {{ message.sender.username }}
                         {% endif %}
                     </strong>
-                    
-                    <!-- Display image if present -->
+
+                    <!-- Display Image if Present -->
                     {% if message.image %}
                         <img src="{{ message.image.url }}" alt="Shared Image" class="shared-image">
                     {% endif %}
-                    
-                    <!-- Display message content -->
+
+                    <!-- Message Content -->
                     <p>{{ message.content }}</p>
 
-                    <!-- Timestamp and read status -->
+                    <!-- Timestamp and Read Status -->
                     <span class="timestamp">
                         {{ message.timestamp|date:"h:i A" }}
                         {% if message.sender == request.user %}
@@ -81,11 +93,13 @@
             {% endfor %}
         </div>
 
-        <!-- Message input field -->
+        <!-- Message Input -->
         <div class="chat-input">
             <form method="post" action="{% url 'send_message' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="input-group">
+                    
+                    <!-- Message Recipient Handling -->
                     {% if request.user.is_staff and selected_customer %}
                         <input type="hidden" name="recipient" value="{{ selected_customer.id }}">
                     {% else %}
@@ -95,6 +109,7 @@
                             {% endfor %}
                         </select>
                     {% endif %}
+                    
                     <textarea name="content" id="content" placeholder="Type your message here..." rows="2"></textarea>
                     
                     <!-- Attach Photo Icon -->
@@ -112,6 +127,7 @@
         </div>
     </div>
 </div>
+
 
 <script>
     // Auto-scroll to the latest message

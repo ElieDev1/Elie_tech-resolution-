@@ -15,7 +15,7 @@
 
         </div>
         
-        <!-- Order History -->
+<!-- Order History -->
 <div class="col-md-8 border border-secondary p-3 rounded">
     <h4>Order History</h4>
     <div class="row overflow-auto" style="max-height: 400px;">
@@ -24,17 +24,26 @@
             <div class="card border-secondary">
                 <div class="card-body">
                     <h5 class="card-title">Order 000{{ order.id }}</h5>
-                    <p><strong>Product:</strong> {{ order.product.name }}</p>
-                    <p><strong>Quantity:</strong> {{ order.quantity }}</p>
-                    <p><strong>Total Price:</strong> rwf{{ order.total_price |intcomma }}</p>
+
+                    <!-- Loop through order items -->
+                    <ul>
+                        {% for item in order.order_items.all %}
+                        <li>
+                            <p><strong>Product:</strong> {{ item.product.name }}</p>
+                            <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <p><strong>Total Price:</strong> rwf{{ order.total_price | intcomma }}</p>
                     <p><strong>Status:</strong> 
                         {% if order.payment_status == 'Confirmed' %}
                             <span class="px-3 test-success py-1 inline-flex text-sm font-semibold rounded-full bg-green-200 text-green-800">
-                                ✅aproved
+                                ✅ Approved
                             </span>
                         {% else %}
-                        <span class="px-3 text-warning py-1 inline-flex text-sm font-semibold rounded-full bg-red-200 text-red-800">
-                            ⚠️Pending
+                            <span class="px-3 text-warning py-1 inline-flex text-sm font-semibold rounded-full bg-red-200 text-red-800">
+                                ⚠️ Pending
                             </span>
                         {% endif %}
                     </p>
@@ -48,8 +57,8 @@
     </div>
 </div>
 
+
     </div>
-    
     <!-- Liked Products Section -->
     <div class="mt-5 border border-secondary p-3 rounded">
         <h4>Liked Products</h4>
@@ -60,7 +69,7 @@
                     <img src="{{ product.main_image }}" class="card-img-top" alt="{{ product.name }}" style="height: 100px; object-fit: cover;">
                     <div class="card-body p-2">
                         <h6 class="card-title text-truncate">{{ product.name }}</h6>
-                        <p class="card-text text-muted">${{ product.price |intcomma }}</p>
+                        <p class="card-text text-muted">${{ product.price }}</p>
                         <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-primary">View</a>
                     </div>
                 </div>

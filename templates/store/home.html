@@ -5,7 +5,8 @@
 <div class="container">
     <!-- Hero Section -->
     <div class="hero-section text-center py-5 bg-light mb-4">
-        <p class="lead">Discover the latest gadgets and electronics at unbeatable prices.</p>
+        <p class="lead">🚀 Discover the latest gadgets and electronics at unbeatable prices 🔥🎧📱💻. Be the first and get 10% of your payment back! 💰🎉</p>
+
     </div>
 
     <!-- All Products Carousel -->
@@ -20,7 +21,7 @@
                     <img src="{{ product.main_image }}" class="card-img-top product-img" alt="{{ product.name }}">
                     <div class="card-body text-center">
                         <h6 class="card-title">{{ product.name|truncatechars:15 }}</h6>
-                        <p class="card-text price">FRW {{ product.pri|intcomma ce }}</p>
+                        <p class="card-text price">FRW {{ product.price |intcomma }}</p>
                         <div class="button-group">
                             <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm">
                                 <i class="fa fa-eye"></i> View
