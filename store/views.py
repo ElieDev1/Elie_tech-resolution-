@@ -26,6 +26,7 @@ from django.http import HttpResponse
 from django.conf import settings
 
 
+
 def home(request):
     # Products with like counts (for the main grid)
     products_with_likes = Product.objects.annotate(likes_count=Count('likes')).order_by('-likes_count')
@@ -40,14 +41,21 @@ def home(request):
         for category in categories
     }
 
+    # Fetch active advertisements (only those within the active date range)
+    advertisements = Advertisement.objects.filter(
+        active=True,
+        start_date__lte=timezone.now(),
+        end_date__gte=timezone.now()
+    )
+
     context = {
         'products_with_likes': products_with_likes,  # Key change
         'all_products': all_products,  # Now shows 40 random products
         'categories': categories,
         'product_counts': product_counts,
+        'advertisements': advertisements,  # Add ads to context
     }
     return render(request, 'store/home.html', context)
-
 
 
 

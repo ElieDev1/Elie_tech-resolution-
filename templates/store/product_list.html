@@ -168,6 +168,7 @@
                 </ul>
             </div>
         </div>
+        
 
         <!-- Product List -->
         <div class="col-md-9">
@@ -396,6 +397,22 @@
         
         margin-top: -7%;
     }
+    /* For small screens */
+@media (max-width: 768px) {
+    .category-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* Two columns */
+        gap: 10px;
+    }
+}
+
+/* For larger screens (full-width behavior on computers) */
+@media (min-width: 769px) {
+    .category-list {
+        display: block; /* Single column, full-width */
+    }
+}
+
 </style>
 
 <script>

@@ -90,7 +90,7 @@
                     <!-- Message link with unread count badge -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'messages' %}">
-                            <i class="fa fa-message"></i> Message
+                            <i class="fa fa-message"></i> Messages
                             {% if unread_message_count > 0 %}
                                 <span id="unreadMessageCount" class="badge bg-danger">{{ unread_message_count }}</span>
                             {% endif %}
