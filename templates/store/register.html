@@ -1,36 +1,67 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<h2>Register</h2>
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" name="username" id="username" class="form-control" required>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="row w-75">
+        <!-- Registration Form Card -->
+        <div class="col-md-6 d-flex align-items-stretch">
+            <div class="card shadow-lg p-4" style="border-radius: 10px; background-color: #f8f9fa;">
+                <div class="card-body">
+                    <h3 class="text-center mb-4 text-primary">Register 📝</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Username 🧑‍💻</label>
+                                <input type="text" name="username" id="username" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name ✨</label>
+                                <input type="text" name="first_name" id="first_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name ✨</label>
+                                <input type="text" name="last_name" id="last_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email 📧</label>
+                                <input type="email" name="email" id="email" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password 🔒</label>
+                                <input type="password" name="password" id="password" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number 📱</label>
+                                <input type="text" name="phone" id="phone" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address 🏠</label>
+                            <textarea name="address" id="address" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Register 🛒</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Info Card -->
+        <div class="col-md-6 d-flex align-items-stretch">
+            <div class="card shadow-lg p-4 bg-light" style="border-radius: 10px;">
+                <div class="card-body d-flex flex-column">
+                    <h3 class="text-center mb-4 text-success">About Elie Tech 💡</h3>
+                    <p>Elie Tech is a leading online electronics store providing the latest gadgets and tech solutions at affordable prices. 🎧📱</p>
+                    <ul>
+                        <li>Wide range of electronic products 📦</li>
+                        <li>Secure online payments via MTN MoMoPay 💳</li>
+                        <li>Fast and reliable delivery services 🚚</li>
+                        <li>24/7 customer support 📞</li>
+                    </ul>
+                    <p>Join us today and experience the best online shopping for electronics! 🛍️</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label for="first_name" class="form-label">First Name</label>
-        <input type="text" name="first_name" id="first_name" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="last_name" class="form-label">Last Name</label>
-        <input type="text" name="last_name" id="last_name" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" name="email" id="email" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" name="password" id="password" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="phone" class="form-label">Phone Number</label>
-        <input type="text" name="phone" id="phone" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="address" class="form-label">Address</label>
-        <textarea name="address" id="address" class="form-control" rows="3" required></textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-</form>
+</div>
 {% endblock %}
