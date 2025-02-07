@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-1fbvd-u%sy8(mmkip20obi)ari6p02gkuq4j+n*)wp)r1lmyqn'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['elie-tech.herokuapp.com', 'elie-tech-23f5fa011040.herokuapp.com','localhost', '127.0.0.1']
 
@@ -147,7 +147,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For testing,
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_ACCESS_KEY_ID = 'AKIASBGQK56Y5XAMI5DX'
 AWS_SECRET_ACCESS_KEY = '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'
-AWS_STORAGE_BUCKET_NAME = 'elie-tech-bucket'
+AWS_STORAGE_BUCKET_NAME = 'elietech-bucket'
 AWS_S3_REGION_NAME = 'eu-north-1'
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
