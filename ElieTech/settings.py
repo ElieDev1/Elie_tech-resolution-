@@ -126,7 +126,7 @@ STATICFILES_DIRS = [
 ]
 
 # settings.py
-MEDIA_URL = '/media/'
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -143,5 +143,13 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For testing,
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = 'your-email@example.com'
 # EMAIL_HOST_PASSWORD = 'your-email-password'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = 'AKIASBGQK56Y5XAMI5DX'
+AWS_SECRET_ACCESS_KEY = '1mFi1/6bsaMucKcNyoLjc6QCUNtvZG7ge+B8nRF3'
+AWS_STORAGE_BUCKET_NAME = 'elie-tech-bucket'
+AWS_S3_REGION_NAME = 'eu-north-1'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 
