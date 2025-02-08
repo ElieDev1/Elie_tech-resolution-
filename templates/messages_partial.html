@@ -1,0 +1,24 @@
+{% for message in messages %}
+<div class="d-flex mb-3 {% if message.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+    <div class="message-bubble {% if message.sender == request.user %}message-out{% else %}message-in{% endif %}">
+        {% if message.image %}
+            <img src="{{ message.image.url }}" class="img-fluid rounded mb-2" alt="Attached image">
+        {% endif %}
+        <div class="message-content">{{ message.content }}</div>
+        <div class="message-time mt-1 text-{% if message.sender == request.user %}white-50{% else %}muted{% endif %}">
+            {{ message.timestamp|time }}
+            {% if message.sender == request.user %}
+                {% if message.is_read %}
+                    <i class="fas fa-check-double ms-1 small"></i>
+                {% else %}
+                    <i class="fas fa-check ms-1 small"></i>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-center text-muted py-4">
+    No messages yet. Start the conversation!
+</div>
+{% endfor %}

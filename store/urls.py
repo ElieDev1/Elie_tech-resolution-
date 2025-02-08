@@ -38,10 +38,11 @@ urlpatterns = [
 
 
 
+
+    path('about/', views.about_view, name='about'),
     path('messages/', views.message_page, name='messages'),
     path('chat_with_customer/<int:customer_id>/', views.chat_with_customer, name='chat_with_customer'),
     path('send_message/', views.send_message, name='send_message'),
-    path('about/', views.about_view, name='about'),
 
 
 

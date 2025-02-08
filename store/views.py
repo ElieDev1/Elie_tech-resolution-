@@ -99,7 +99,7 @@ def register(request):
             email=email,
             password=password
         )
-        
+
         # Optionally, save the phone and address in a custom model (Customer)
         customer = Customer.objects.create(
             user=user,
@@ -224,7 +224,7 @@ def product_list(request):
 
     # Fetch random 50 products (instead of first 50)
     random_products = products.order_by('?')[:50]
-    
+
     random_products_with_likes = [
         {
             'product': product,
@@ -341,7 +341,7 @@ def increase_quantity(request, product_id):
 
     # Check if product exists in cart
     if product_id_str in cart:
-        if isinstance(cart[product_id_str], int):  
+        if isinstance(cart[product_id_str], int):
             # Old format (e.g., cart["27"] = 2)
             cart[product_id_str] += 1
         elif isinstance(cart[product_id_str], dict) and 'quantity' in cart[product_id_str]:
@@ -355,7 +355,7 @@ def increase_quantity(request, product_id):
         cart[product_id_str] = {"quantity": 1}
 
     request.session['cart'] = cart
-    request.session.modified = True 
+    request.session.modified = True
     return redirect('cart_view')
 
 
@@ -520,101 +520,117 @@ def process_checkout(request):
 
 
 
-def message_page(request):
-    # Your logic to fetch messages
-    all_messages = Message.objects.filter(
-        Q(recipient=request.user) | Q(sender=request.user)
-    ).order_by('timestamp')
-
-    # Fetch customers who have messaged the current user
-    customers_who_messaged = User.objects.filter(
-        Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
-    ).distinct()
-
-    # Prepare unread message count for each customer
-    unread_messages_per_customer = {}
-    for customer in customers_who_messaged:
-        unread_count = customer.received_messages.filter(is_read=False).count()
-        unread_messages_per_customer[customer.id] = unread_count
-
-    return render(request, 'message.html', {
-        'all_messages': all_messages,
-        'customers_who_messaged': customers_who_messaged,
-        'unread_messages_per_customer': unread_messages_per_customer,
-        'selected_customer': None,
-    })
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------------------------------------------------------------
+# Message Page View
+# ---------------------------------------------------------------
 @csrf_exempt
-@login_required
-def chat_with_customer(request, customer_id):
-    """Handles chat view ensuring customers can only chat with staff."""
+def message_page(request):
     if not request.user.is_authenticated:
-        return redirect("login")
+        return redirect('login')
 
-    customer = get_object_or_404(User, id=customer_id)
-
-    # Ensure customers cannot chat with each other
-    if not request.user.is_staff and not customer.is_staff:
-        return redirect("messages")  # Redirect if both users are customers
-
-    # Mark messages as read when chat is opened
-    Message.objects.filter(
-        sender=customer,
-        recipient=request.user,
-        is_read=False
-    ).update(is_read=True)
-
-    # Get messages between current user and selected customer/staff
-    all_messages = Message.objects.filter(
-        (Q(sender=request.user) & Q(recipient=customer)) |
-        (Q(sender=customer) & Q(recipient=request.user))
-    ).order_by("timestamp")
-
-    # Get list of users who interacted with the current user
+    # Get users who sent or received messages from the current user
     customers_who_messaged = None
     if request.user.is_staff:
         customers_who_messaged = User.objects.filter(
             Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
         ).distinct()
 
-    return render(request, "message.html", {
-        "all_messages": all_messages,
-        "admins": User.objects.filter(is_staff=True),  # Only staff members
-        "customers_who_messaged": customers_who_messaged,
-        "selected_customer": customer,
+    # Get all messages for the current user
+    all_messages = Message.objects.filter(
+        Q(recipient=request.user) | Q(sender=request.user)
+    ).order_by('timestamp')
+
+    return render(request, 'message.html', {
+        'all_messages': all_messages,
+        'admins': User.objects.filter(is_staff=True),
+        'customers_who_messaged': customers_who_messaged,
+        'selected_customer': None,
     })
 
 
 
+# ---------------------------------------------------------------
+# Chat with Customer View (Mark messages as read here)
+# ---------------------------------------------------------------
 @csrf_exempt
-@login_required
+def chat_with_customer(request, customer_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    customer = get_object_or_404(User, id=customer_id)
+
+    # MARK MESSAGES AS READ WHEN CHAT IS OPENED
+    # Update all messages from this customer to the current user as read
+    Message.objects.filter(
+        sender=customer,
+        recipient=request.user,
+        is_read=False  # Only mark unread messages
+    ).update(is_read=True)
+
+    # Get messages between current user and selected customer
+    all_messages = Message.objects.filter(
+        (Q(sender=request.user) & Q(recipient=customer)) |
+        (Q(sender=customer) & Q(recipient=request.user))
+    ).order_by('timestamp')
+
+    # Get users who sent or received messages from the current user
+    customers_who_messaged = None
+    if request.user.is_staff:
+        customers_who_messaged = User.objects.filter(
+            Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
+        ).distinct()
+
+    return render(request, 'message.html', {
+        'all_messages': all_messages,
+        'admins': User.objects.filter(is_staff=True),
+        'customers_who_messaged': customers_who_messaged,
+        'selected_customer': customer,
+    })
+
+# ---------------------------------------------------------------
+# Send Message View (Mark previous messages as read when replying)
+# ---------------------------------------------------------------
+@csrf_exempt
 def send_message(request):
-    """Handles sending messages while ensuring customers chat only with staff."""
-    if request.method == "POST":
-        recipient_id = request.POST.get("recipient")
-        content = request.POST.get("content", "").strip()
-        image = request.FILES.get("image")
+    if not request.user.is_authenticated:
+        return redirect('login')
 
-        # Ensure recipient ID is provided
-        if not recipient_id:
-            return redirect("messages")
-
-        recipient = get_object_or_404(User, id=recipient_id)
-
-        # Prevent customers from chatting with other customers
-        if not request.user.is_staff and not recipient.is_staff:
-            return redirect("messages")  # Customers can only chat with staff
+    if request.method == 'POST':
+        recipient_id = request.POST.get('recipient')
+        content = request.POST.get('content', '').strip()
+        image = request.FILES.get('image')
 
         if content or image:
-            # Mark unread messages from recipient as read
+            recipient = get_object_or_404(User, id=recipient_id)
+
+            # MARK PREVIOUS MESSAGES AS READ WHEN REPLYING
+            # Update all unread messages from the recipient to the current user
             Message.objects.filter(
                 sender=recipient,
                 recipient=request.user,
                 is_read=False
             ).update(is_read=True)
 
-            # Create and save the new message
+            # Create the new message
             Message.objects.create(
                 sender=request.user,
                 recipient=recipient,
@@ -622,23 +638,39 @@ def send_message(request):
                 image=image
             )
 
-    return redirect("messages")
+    return redirect('messages')
 
-
-
+# ---------------------------------------------------------------
+# Context Processor (Unread Message Count)
+# ---------------------------------------------------------------
+@csrf_exempt
 def unread_message_count(request):
-    """Returns the count of unread messages for the logged-in user."""
+    unread_count = 0
     if request.user.is_authenticated:
-        return {
-            "unread_message_count": Message.objects.filter(
-                recipient=request.user, is_read=False
-            ).count()
-        }
-    return {"unread_message_count": 0}
+        # Count messages where the user is the recipient and is_read=False
+        unread_count = Message.objects.filter(
+            recipient=request.user,
+            is_read=False
+        ).count()
+    return {'unread_message_count': unread_count}
 
 
 
-from django.utils.dateparse import parse_date  # ✅ Import parse_date
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @staff_member_required
 def admin_products(request):
@@ -680,7 +712,7 @@ def admin_products(request):
 @staff_member_required
 def admin_orders(request):
     today = timezone.now().date()
-    
+
     # Get filter parameters from request
     status_filter = request.GET.get('status', None)
     delivery_status_filter = request.GET.get('delivery_status', None)
@@ -868,11 +900,11 @@ def admin_users(request):
 def admin_edit_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     customer, created = Customer.objects.get_or_create(user=user)
-    
+
     if request.method == 'POST':
         user_form = UserForm(request.POST, instance=user)
         customer_form = CustomerForm(request.POST, request.FILES, instance=customer)
-        
+
         if user_form.is_valid() and customer_form.is_valid():
             user_form.save()
             customer_form.save()
@@ -881,7 +913,7 @@ def admin_edit_user(request, user_id):
     else:
         user_form = UserForm(instance=user)
         customer_form = CustomerForm(instance=customer)
-    
+
     return render(request, 'admin/edit_user.html', {
         'user_form': user_form,
         'customer_form': customer_form
@@ -920,7 +952,7 @@ def admin_delete_user(request, user_id):
         messages.success(request, "User deleted successfully.")
     except User.DoesNotExist:
         messages.error(request, "User not found.")
-    
+
     return redirect('admin_users')  # Redirect back to the user list page
 
 
@@ -945,7 +977,7 @@ from django.http import HttpResponseForbidden
 @csrf_exempt
 def admin_delete_message(request, message_id):
     message = get_object_or_404(Message, id=message_id)
-    
+
     if request.method == 'POST':
         message.delete()
         return redirect('admin_messages')  # Redirect to the list of messages (update this URL)
@@ -958,7 +990,7 @@ def admin_delete_message(request, message_id):
 @staff_member_required
 def admin_product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    
+
     # Find order items related to this product
     order_items = OrderItem.objects.filter(product=product)
 
@@ -987,35 +1019,35 @@ def admin_view_user(request, user_id):
 
 def admin_search(request):
     query = request.GET.get('query', '')
-    
+
     # Search logic: You can search across multiple models
     products = Product.objects.filter(
-        Q(name__icontains=query) | 
-        Q(description__icontains=query) | 
+        Q(name__icontains=query) |
+        Q(description__icontains=query) |
         Q(category__icontains=query)
     )
-    
+
     # Search in Orders (including searching product names related to orders)
     orders = Order.objects.filter(
         Q(customer__user__username__icontains=query) |
         Q(order_items__product__name__icontains=query)  # Corrected to reference `order_items` and `product`
     ).prefetch_related('order_items')  # Prefetch order_items for efficient querying
-    
+
     # Search in Users
     users = User.objects.filter(
-        Q(username__icontains=query) | 
-        Q(first_name__icontains=query) | 
+        Q(username__icontains=query) |
+        Q(first_name__icontains=query) |
         Q(last_name__icontains=query)
     )
-    
+
     messages = Message.objects.filter(
-        Q(sender__username__icontains=query) | 
-        Q(recipient__username__icontains=query) | 
+        Q(sender__username__icontains=query) |
+        Q(recipient__username__icontains=query) |
         Q(content__icontains=query)
     )
-    
+
     team_members = TeamMember.objects.filter(
-        Q(name__icontains=query) | 
+        Q(name__icontains=query) |
         Q(role__icontains=query)
     )
 
@@ -1035,15 +1067,15 @@ def admin_search(request):
 def payment_method(request, order_id):
     # Fetch the order by order_id
     order = get_object_or_404(Order, id=order_id)
-    
+
     if request.method == 'POST':
         form = PaymentForm(request.POST, request.FILES)
-        
+
         if form.is_valid():
             # Save payment details in order
             order.payment_message = form.cleaned_data['payment_message']
             order.payment_image = form.cleaned_data.get('payment_image')
-            
+
             # Check if payment message or image is provided before setting payment status
             if order.payment_message or order.payment_image:
                 order.payment_status = 'Pending'  # Only set to "Pending" if either message or image is provided
@@ -1053,10 +1085,10 @@ def payment_method(request, order_id):
 
             # Set success message
             messages.success(request, f"Thank you {order.customer.user.username} for buying with us 🎉. Your payment is being processed. If approved, you will see a message. Thank you!")
-            
+
             # Redirect to the order detail page
             return redirect('order_detail', order_id=order.id)
-    
+
     else:
         form = PaymentForm()
 
@@ -1070,10 +1102,10 @@ def payment_method(request, order_id):
 def order_detail(request, order_id):
     # Fetch the order by order_id and ensure it exists
     order = get_object_or_404(Order, id=order_id)
-    
+
     # Get the associated order items
     order_items = order.order_items.all()
-    
+
     # Pass the order, order_items, and payment status to the template
     return render(request, 'store/order_detail.html', {
         'order': order,
@@ -1098,12 +1130,12 @@ def payment_method(request, order_id):
 
     if request.method == 'POST':
         form = PaymentForm(request.POST, request.FILES)
-        
+
         if form.is_valid():
             # Save payment details in the order
             order.payment_message = form.cleaned_data['payment_message']
             order.payment_image = form.cleaned_data.get('payment_image')
-            
+
             # Set payment status to 'Pending' when details are submitted
             order.payment_status = 'Pending'
             order.save()
@@ -1218,11 +1250,11 @@ def confirm_delivery(request, order_id):
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
-    
+
     # Debugging
     print(f"Fetching order: {order}")
     print(f"Order items count: {order.order_items.count()}")
-    
+
     order_items = order.order_items.all()
 
     context = {
@@ -1273,7 +1305,7 @@ def admin_dashboard(request):
         payment_status = order['payment_status']
         if delivery_status not in delivery_status_counts:
             delivery_status_counts[delivery_status] = {'Pending': 0, 'Confirmed': 0}
-        
+
         if payment_status == 'Pending':
             delivery_status_counts[delivery_status]['Pending'] += order['count']
         elif payment_status == 'Confirmed':
@@ -1288,7 +1320,7 @@ def admin_dashboard(request):
         }
         for delivery_status, counts in delivery_status_counts.items()
     ]
-    
+
     # Aggregating revenue by category - joining OrderItem model
     revenue_by_category = list(Product.objects
         .values('category')
@@ -1346,17 +1378,17 @@ def admin_dashboard(request):
 
 @staff_member_required
 def all_products(request):
-    
+
     products = Product.objects.all()
-    
+
     return render(request, 'admin/all_products.html', {'products': products})
 
 
 
 def sold_products_list(request):
-   
+
     products = Product.objects.all().annotate(
-        total_sold=Sum('orderitem__quantity')  
+        total_sold=Sum('orderitem__quantity')
     )
     return render(request, 'admin/sold_products_list.html', {'products': products})
 
@@ -1364,7 +1396,7 @@ def sold_products_list(request):
 def all_customers(request):
     # Fetch all customers ordered by the most recent registration date
     customers = Customer.objects.all().order_by('-user__date_joined')  # Ordering by the related User's join date
-    
+
     return render(request, 'admin/all_customers.html', {'customers': customers})
 
 
@@ -1508,13 +1540,13 @@ def create_notification(request):
 
 def edit_notification(request, pk):
     notification = get_object_or_404(Notification, pk=pk)  # Get the notification to edit
-    
+
     if request.method == 'POST':
         form = NotificationForm(request.POST, instance=notification)  # Pre-fill the form with existing data
-        
+
         if form.is_valid():
             notification = form.save(commit=False)  # Don't save yet; we'll handle related fields manually
-            
+
             # Safely check for the 'for_all' field in the cleaned data
             for_all = form.cleaned_data.get('for_all', False)  # Default to False if not present
             if for_all:

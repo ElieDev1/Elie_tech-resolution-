@@ -18,7 +18,7 @@
             {% for product in all_products %}
             <div class="product-card-wrapper">
                 <div class="card product-card h-100">
-                    <img src="https://elietech-bucket.s3.eu-north-1.amazonaws.com/stone+tv2.png" class="card-img-top product-img" alt="{{ product.name }}">
+                    <img src="{{ product.main_image }}" class="card-img-top product-img" alt="{{ product.name }}">
                     <div class="card-body text-center">
                         <h6 class="card-title">{{ product.name|truncatechars:15 }}</h6>
                         <p class="card-text price">FRW {{ product.price |intcomma }}</p>
