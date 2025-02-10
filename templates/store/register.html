@@ -29,8 +29,25 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="password" class="form-label">Password 🔒</label>
-                                <input type="password" name="password" id="password" class="form-control" required>
+                                <div class="input-group">
+                                    <input type="password" name="password" id="password" class="form-control" required>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password', 'togglePasswordIcon1')">
+                                        <i id="togglePasswordIcon1" class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password 🔒</label>
+                                <div class="input-group">
+                                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirm_password', 'togglePasswordIcon2')">
+                                        <i id="togglePasswordIcon2" class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            
                             <div class="col-md-6 mb-3">
                                 <label for="phone" class="form-label">Phone Number 📱</label>
                                 <input type="text" name="phone" id="phone" class="form-control" required>
@@ -64,4 +81,21 @@
         </div>
     </div>
 </div>
+<script>
+    function togglePassword(fieldId, iconId) {
+        let field = document.getElementById(fieldId);
+        let icon = document.getElementById(iconId);
+    
+        if (field.type === "password") {
+            field.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            field.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+</script>
+    
 {% endblock %}

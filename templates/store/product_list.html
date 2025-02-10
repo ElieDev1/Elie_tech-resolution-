@@ -158,35 +158,32 @@
             <div class="category-card">
                 <ul class="list-group mb-4 category-list">
                     <li class="list-group-item {% if not request.GET.category %}active{% endif %}">
-                        <a href="{% url 'product_list' %}" class="text-decoration-none">All Categories</a>
+                        <a href="{% url 'product_list' %}" class="text-decoration-none text-black">All Categories</a>
                     </li>
                     {% for value, label in categories %}
-                        <li class="list-group-item {% if request.GET.category == value %}active{% endif %}">
-                            <a href="{% url 'product_list' %}?category={{ value }}" class="text-decoration-none">{{ label }}</a>
+                        <li class="list-group-item  {% if request.GET.category == value %}active{% endif %}">
+                            <a href="{% url 'product_list' %}?category={{ value }}" class="text-decoration-none text-black">{{ label }}</a>
                         </li>
                     {% endfor %}
                 </ul>
             </div>
-        </div>
-        
-
-        <!-- Product List -->
+            
+        </div><!-- Product List -->
         <div class="col-md-9">
-            <div class="row">
+            <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3 align-items-stretch">
                 {% for item in products_with_likes %}
-                <div class="col-6 col-sm-4 col-md-33 col-lg-2-4 mb-4">
-                    <div class="card product-card h-100">
+                <div class="col">
+                    <div class="card product-card h-100 d-flex flex-column">
                         {% if item.product.main_image %}
                         <img src="{{ item.product.main_image }}" class="card-img-top product-img" alt="{{ item.product.name }}">
                         {% else %}
-                            <img src="/static/default_image.jpg" class="card-img-top product-img" alt="No Image Available">
+                        <img src="/static/default_image.jpg" class="card-img-top product-img" alt="No Image Available">
                         {% endif %}
-                        <div class="card-body text-center p-2">
+                        <div class="card-body text-center p-2 flex-grow-1">
                             <h6 class="card-title mb-1">{{ item.product.name|truncatechars:20 }}</h6>
                             <p class="card-text price mb-1">RWF {{ item.product.price |intcomma }}</p>
-                            <h6 class="card-text mb-1 ">RWF{{ item.product.expected_price|truncatechars:20 }}</h6>
-                            
-                            
+                            <h6 class="card-text mb-1">RWF {{ item.product.expected_price|intcomma }}</h6>
+        
                             <!-- Hidden Content -->
                             <div class="card-hidden-content">
                                 <small class="text-muted">Stock: {{ item.product.stock }}</small>
@@ -197,7 +194,7 @@
                                     <button class="btn unlike-btn" id="unlike-btn-{{ item.product.id }}" onclick="toggleLike('{{ item.product.id }}', false)">
                                         <i class="fa-solid fa-thumbs-down"></i>
                                     </button>
-                                    <span id="like-count-{{ item.product.id }}" class="like-count">{{ item.product.likes.count|intcomma  }} like</span>
+                                    <span id="like-count-{{ item.product.id }}" class="like-count">{{ item.product.likes.count|intcomma }} likes</span>
                                 </div>
                                 <div class="button-group mt-2 d-flex justify-content-between">
                                     <a href="{% url 'product_detail' item.product.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
@@ -213,9 +210,38 @@
                 </div>
                 {% endfor %}
             </div>
+        
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% if products_with_likes.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">&laquo; First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products_with_likes.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+        
+                        <li class="page-item active">
+                            <span class="page-link">{{ products_with_likes.number }} of {{ products_with_likes.paginator.num_pages }}</span>
+                        </li>
+        
+                        {% if products_with_likes.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products_with_likes.next_page_number }}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products_with_likes.paginator.num_pages }}">Last &raquo;</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
         </div>
-    </div>
-</div>
+        
+    </div>        
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 

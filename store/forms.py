@@ -1,13 +1,30 @@
 from django import forms
 from .models import *
 
+
 class ProductForm(forms.ModelForm):
+    main_image = forms.ModelChoiceField(
+        queryset=ProductImage.objects.none(),  # Set dynamically in __init__
+        required=False,
+        widget=forms.RadioSelect
+    )
+
     class Meta:
         model = Product
         fields = '__all__'
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'expected_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'stock': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['main_image'].queryset = self.instance.product_images.all()
+            self.fields['main_image'].initial = self.instance.product_images.filter(main_image=True).first()
 
 class OrderForm(forms.ModelForm):
     class Meta:

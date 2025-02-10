@@ -19,10 +19,9 @@
                         {% if customer.customer and customer.customer.profile_picture %}
                             <img src="{{ customer.customer.profile_picture.url }}" alt="{{ customer.username }}'s Profile" class="customer-img">
                         {% else %}
-                            <i class="fa fa-user-circle" style="font-size: 40px;"></i>
+                            <i class="fa fa-user-circle"></i>
                         {% endif %}
                         <span class="customer-name">{{ customer.username }}</span>
-                        <!-- Unread message badge -->
                         {% if customer.unread_count > 0 %}
                             <span class="unread-badge">{{ customer.unread_count }}</span>
                         {% endif %}
@@ -57,23 +56,20 @@
                             {{ message.sender.username }}
                         {% endif %}
                     </strong>
-                    
-                    <!-- Display image if present -->
+
                     {% if message.image %}
                         <img src="{{ message.image.url }}" alt="Shared Image" class="shared-image">
                     {% endif %}
-                    
-                    <!-- Display message content -->
+
                     <p>{{ message.content }}</p>
 
-                    <!-- Timestamp and read status -->
                     <span class="timestamp">
                         {{ message.timestamp|date:"h:i A" }}
                         {% if message.sender == request.user %}
                             {% if message.is_read %}
-                                <i class="fas fa-check-double text-success"></i> <!-- Double tick for read -->
+                                <i class="fas fa-check-double text-success"></i>
                             {% else %}
-                                <i class="fas fa-check text-muted"></i> <!-- Single tick for sent -->
+                                <i class="fas fa-check text-muted"></i>
                             {% endif %}
                         {% endif %}
                     </span>
@@ -95,17 +91,15 @@
                             {% endfor %}
                         </select>
                     {% endif %}
-                    <textarea name="content" id="content" placeholder="Type your message here..." rows="2"></textarea>
-                    
-                    <!-- Attach Photo Icon -->
+                    <textarea name="content" id="content" placeholder="Type your message..." rows="2"></textarea>
+
                     <label for="image" class="attach-icon">
-                        <i class="fa fa-camera" style="font-size: 24px;"></i>
+                        <i class="fa fa-camera"></i>
                     </label>
-                    <input type="file" name="image" id="image" accept="image/*" style="display:none;">
-                    
-                    <!-- Send Button -->
+                    <input type="file" name="image" id="image" accept="image/*">
+
                     <button type="submit" class="send-button">
-                        <i class="fa fa-paper-plane" style="font-size: 24px;"></i>
+                        <i class="fa fa-paper-plane"></i>
                     </button>
                 </div>
             </form>
@@ -114,7 +108,6 @@
 </div>
 
 <script>
-    // Auto-scroll to the latest message
     window.onload = function() {
         var chatBox = document.getElementById("chatBox");
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -141,29 +134,22 @@
     .customer-list {
         width: 100%;
         max-width: 300px;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: #2C3E50;
+        color: #fff;
+        border-radius: 12px;
         padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .customer-scroll {
-        max-height: 500px;
+        max-height: 400px;
         overflow-y: auto;
     }
 
     .customer-list h4 {
         font-size: 1.2rem;
         margin-bottom: 15px;
-        color: #007bff;
-    }
-
-    .customer-name {
-        font-weight: bold;
-        color: #333;
-        font-size: 1rem;
-        margin-left: 10px;
+        color: #FF6F61;
     }
 
     .customer-list ul {
@@ -176,20 +162,26 @@
         color: inherit;
         display: flex;
         align-items: center;
-        padding: 10px;
+        padding: 12px;
         border-radius: 8px;
-        transition: background-color 0.3s ease;
+        transition: background-color 0.3s;
     }
 
     .customer-list a:hover {
-        background-color: #f1f1f1;
+        background-color: #34495E;
+    }
+
+    .customer-name {
+        font-weight: bold;
+        color: #FFF;
+        margin-left: 10px;
     }
 
     .unread-badge {
-        background-color: #ff4d4d;
+        background-color: #FF6F61;
         color: white;
         font-size: 0.8rem;
-        padding: 2px 6px;
+        padding: 5px 10px;
         border-radius: 50%;
         margin-left: auto;
     }
@@ -198,18 +190,18 @@
         flex: 1;
         min-width: 320px;
         max-width: 700px;
-        border: 1px solid #ccc;
-        border-radius: 10px;
+        border-radius: 12px;
         overflow: hidden;
-        background-color: #f9f9f9;
+        background-color: #ECF0F1;
         display: flex;
         flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .chat-header {
-        background-color: #007bff;
+        background-color: #FF6F61;
         color: white;
-        padding: 15px;
+        padding: 20px;
         text-align: center;
     }
 
@@ -217,54 +209,52 @@
         padding: 20px;
         height: 400px;
         overflow-y: auto;
-        background-color: #e9ecef;
+        background-color: #FFF;
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
     }
 
     .message {
         margin-bottom: 12px;
         padding: 15px;
-        border-radius: 12px;
+        border-radius: 10px;
         max-width: 70%;
         display: flex;
         flex-direction: column;
     }
 
     .message.received {
-        background-color: #fff;
+        background-color: #E4F1FE;
         margin-right: auto;
         align-self: flex-start;
     }
 
     .message.sent {
-        background-color: #dcf8c6;
+        background-color: #DCF8C6;
         margin-left: auto;
         align-self: flex-end;
     }
 
     .message strong {
-        display: block;
         font-size: 1rem;
         color: #333;
     }
 
     .message p {
         margin: 5px 0;
-        color: #444;
+        color: #555;
     }
 
     .message .timestamp {
-        display: block;
-        font-size: 0.8em;
-        color: #999;
+        font-size: 0.75em;
+        color: #888;
         text-align: right;
     }
 
     .chat-input {
         padding: 20px;
-        background-color: #fff;
+        background-color: #FFF;
         border-top: 1px solid #ddd;
     }
 
@@ -272,39 +262,41 @@
         display: flex;
         gap: 12px;
         align-items: center;
-        flex-wrap: wrap;
     }
 
     .chat-input select, .chat-input textarea {
         flex: 1;
         padding: 12px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
         resize: none;
         min-width: 100px;
     }
 
-    .chat-input button {
-        padding: 12px 18px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .chat-input button:hover {
-        background-color: #0056b3;
-    }
-
-    .attach-icon, .send-button {
+    .send-button, .attach-icon {
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: transparent;
         border: none;
         cursor: pointer;
+    }
+
+    .send-button {
+        background-color: #FF6F61;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .send-button:hover {
+        background-color: #E74C3C;
+    }
+
+    .attach-icon i {
+        font-size: 24px;
+        color: #FF6F61;
     }
 
     .customer-img {

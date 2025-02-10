@@ -79,17 +79,27 @@ def product_detail(request, product_id):
     # Return the page with product details and comments
     return render(request, 'store/product_detail.html', {'product': product})
 
-
 def register(request):
     if request.method == 'POST':
-        # Capture data from the form
-        username = request.POST['username']
-        first_name = request.POST['first_name']
-        last_name = request.POST['last_name']
-        email = request.POST['email']
-        password = request.POST['password']
-        phone = request.POST['phone']
-        address = request.POST['address']
+        # Capture data from the form safely
+        username = request.POST.get('username')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password', '')  # Avoids KeyError
+        phone = request.POST.get('phone')
+        address = request.POST.get('address')
+        
+        # Ensure confirm_password exists
+        if not confirm_password:
+            messages.error(request, "Please confirm your password!")
+            return redirect('register')
+
+        # Check if passwords match
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match!")
+            return redirect('register')
 
         # Create the user
         user = User.objects.create_user(
@@ -100,16 +110,20 @@ def register(request):
             password=password
         )
 
-        # Optionally, save the phone and address in a custom model (Customer)
-        customer = Customer.objects.create(
+        # Save additional details in Customer model
+        Customer.objects.create(
             user=user,
             phone_number=phone,
             address=address
         )
 
-        # Provide feedback and redirect
+        # Log the user in after registration
+        login(request, user)
+
+        # Redirect to the previous page or home
+        next_url = request.GET.get('next', 'home')
         messages.success(request, 'Account created successfully!')
-        return redirect('login')  # Redirect to login page or wherever you want
+        return redirect(next_url)
 
     return render(request, 'store/register.html')
 
@@ -223,7 +237,7 @@ def product_list(request):
     ]
 
     # Fetch random 50 products (instead of first 50)
-    random_products = products.order_by('?')[:50]
+    random_products = products.order_by('?')[:500]
 
     random_products_with_likes = [
         {
@@ -234,7 +248,7 @@ def product_list(request):
     ]
 
     # Pagination for products (15 items per page)
-    paginator = Paginator(random_products_with_likes, 15)  # 15 products per page
+    paginator = Paginator(random_products_with_likes, 50)  # 15 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -486,7 +500,7 @@ def checkout(request):
 from django.urls import reverse
 
 @csrf_exempt
-@login_required(login_url='/login/')  # Redirect to login if not authenticated
+@login_required(login_url='/register/')  # Redirect to login if not authenticated
 def process_checkout(request):
     cart = request.session.get('cart', {})
 
@@ -516,6 +530,10 @@ def process_checkout(request):
 
     # Redirect to order details page after successful checkout
     return redirect(reverse('order_detail', kwargs={'order_id': order.id}))
+
+
+
+
 
 
 
@@ -670,7 +688,7 @@ def unread_message_count(request):
 
 
 
-
+from django.utils.dateparse import parse_date  # ✅ Import parse_date
 
 @staff_member_required
 def admin_products(request):
@@ -806,24 +824,49 @@ def add_product(request):
         form = ProductForm()
     return render(request, 'admin/product_form.html', {'form': form})
 
+from django.db import transaction
+
+
+
+
+
+
+
+
+
+
+
 @staff_member_required
 @csrf_exempt
 def edit_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
+    
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
-            form.save()
-            # Handle image updates
-            if request.FILES.getlist('images'):
-                ProductImage.objects.filter(product=product).delete()
-                for file in request.FILES.getlist('images'):
-                    ProductImage.objects.create(product=product, image=file)
-            messages.success(request, 'Product updated successfully!')
-            return redirect('admin_products')
+            with transaction.atomic():  # Ensure atomic update
+                form.save()
+
+                # Handle additional image uploads
+                if request.FILES.getlist('images'):
+                    for file in request.FILES.getlist('images'):
+                        ProductImage.objects.create(product=product, image=file)
+                
+                # Update main image selection
+                main_image_id = request.POST.get('main_image')
+                if main_image_id and ProductImage.objects.filter(id=main_image_id, product=product).exists():
+                    ProductImage.objects.filter(product=product).update(main_image=False)
+                    ProductImage.objects.filter(id=main_image_id).update(main_image=True)
+                
+                messages.success(request, 'Product updated successfully!')
+                return redirect('admin_products')
+        else:
+            messages.error(request, 'There was an error updating the product.')
+
     else:
         form = ProductForm(instance=product)
-    return render(request, 'admin/product_form.html', {'form': form})
+
+    return render(request, 'admin/product_form.html', {'form': form, 'product': product})
 
 
 

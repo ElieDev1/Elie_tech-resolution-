@@ -8,7 +8,6 @@
         <p class="lead">🚀 Discover the latest gadgets and electronics at unbeatable prices 🔥🎧📱💻. Be the first and get 10% of your payment back! 💰🎉</p>
 
     </div>
-
     <!-- All Products Carousel -->
     <div class="position-relative products-carousel-container">
         <button class="btn btn-primary scroll-btn left-scroll" onclick="scrollHorizontal(-300)">
@@ -39,7 +38,23 @@
             &gt;
         </button>
     </div>
-
+    
+    <script>
+    // Function to scroll the products horizontally
+    function scrollHorizontal(distance) {
+        var container = document.getElementById('productsContainer');
+        container.scrollBy({
+            left: distance,
+            behavior: 'smooth'
+        });
+    }
+    
+    // Automatically scroll every 3 seconds
+    setInterval(function() {
+        scrollHorizontal(300); // Adjust the distance as needed
+    }, 3000);
+    </script>
+    
     <!-- Categories Section -->
     <h2 class="my-4 text-center">Shop by Category</h2>
     <div class="row">
@@ -84,10 +99,11 @@
                         <a href="{% url 'product_list' %}" class="text-decoration-none">All Categories</a>
                     </li>
                     {% for value, label in categories %}
-                        <li class="list-group-item {% if request.GET.category == value %}active{% endif %}">
-                            <a href="{% url 'product_list' %}?category={{ value }}" class="text-decoration-none">{{ label }}</a>
-                        </li>
-                    {% endfor %}
+                         <li class="list-group-item {% if request.GET.category == value %}active text-white{% endif %}">
+                        <a href="{% url 'product_list' %}?category={{ value }}" class="text-decoration-none {% if request.GET.category == value %}text-white{% else %}text-black{% endif %}">{{ label }}</a>
+                    </li>
+                   {% endfor %}
+                
                 </ul>
             </div>
             <div class="category-card mt-3">
@@ -399,7 +415,27 @@
     color: #888;
     font-style: italic;
 }
+/* Custom column width for 5 products per row */
+@media (min-width: 1200px) {
+    .col-lg-custom {
+        flex: 0 0 20%;  /* 20% width */
+        max-width: 20%;  /* 5 per row */
+    }
+}
 
+/* Adjust for smaller screens */
+@media (max-width: 1199px) {
+    .col-lg-custom { flex: 0 0 25%; max-width: 25%; }  /* 4 per row */
+}
+@media (max-width: 991px) {
+    .col-lg-custom { flex: 0 0 33.33%; max-width: 33.33%; }  /* 3 per row */
+}
+@media (max-width: 767px) {
+    .col-lg-custom { flex: 0 0 50%; max-width: 50%; }  /* 2 per row */
+}
+@media (max-width: 576px) {
+    .col-lg-custom { flex: 0 0 100%; max-width: 100%; }  /* 1 per row */
+}
 
 </style>
 

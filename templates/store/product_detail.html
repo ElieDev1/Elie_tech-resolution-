@@ -302,4 +302,26 @@
 </script>
 
 
+<script>
+    function toggleLike(productId, isLike) {
+        const likeCountSpan = document.getElementById('like-count-' + productId);
+
+        fetch(`/like_product/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, like: isLike })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                likeCountSpan.textContent = `${data.like_count} Like`;
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
+</script>
+
 {% endblock %}

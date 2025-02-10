@@ -1,11 +1,11 @@
 {% extends 'admin/base_site.html' %}
 {% load humanize %}
 {% block content %}
-<div class="container">
+<div class="container mx-auto px-4">
     <h1 class="mb-4 text-2xl font-bold">📦 Product Details</h1>
 
     <div class="bg-white p-4 rounded shadow-lg border">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Product Description -->
             <div class="border p-4 rounded">
                 <h2 class="text-lg font-bold">📝 {{ product.name }}</h2>
@@ -15,17 +15,18 @@
             <div class="border p-4 rounded text-center">
                 <h3 class="mt-2 text-lg font-semibold">📸 Main Product Image</h3>
                 {% if product.main_image %}
-                    <img src="{{ product.main_image }}" alt="Main Product Image" class="w-48 h-48 rounded shadow mx-auto">
+                    <img src="{{ product.main_image }}" alt="Main Product Image"
+                        class="w-full max-w-xs h-auto rounded shadow mx-auto">
                 {% else %}
                     <p class="text-gray-500">No main image available</p>
                 {% endif %}
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             <div class="border p-4 rounded">
                 <p><strong>💰 Price:</strong> ${{ product.price|floatformat:2 }}</p>
-                <p><strong>📊 Expected Price:</strong>RWF{{ product.expected_price|floatformat:0|intcomma  }}</p>
+                <p><strong>📊 Expected Price:</strong> RWF{{ product.expected_price|floatformat:0|intcomma }}</p>
                 <p><strong>📦 Stock:</strong> {{ product.stock |intcomma }}</p>
                 <p><strong>📂 Category:</strong> {{ product.get_category_display }}</p>
                 <p><strong>👍 Likes:</strong> {{ product.likes.count }}</p>
@@ -42,10 +43,11 @@
         <!-- Other Product Images -->
         <div class="border p-4 rounded mt-4">
             <h3 class="text-lg font-semibold">📷 Other Product Images</h3>
-            <div class="flex space-x-4 mt-2">
+            <div class="flex flex-wrap gap-2 mt-2">
                 {% for image in product.product_images.all %}
                     {% if not image.main_image %}
-                        <img src="{{ image.image.url }}" alt="Product Image" class="w-32 h-32 rounded shadow">
+                        <img src="{{ image.image.url }}" alt="Product Image"
+                            class="w-full max-w-[100px] h-auto rounded shadow">
                     {% endif %}
                 {% empty %}
                     <p class="text-gray-500">No additional images available</p>
@@ -57,30 +59,32 @@
         <div class="border p-4 rounded mt-4">
             <h3 class="text-lg font-semibold">🛒 Orders Containing This Product</h3>
             {% if order_items %}
-                <table class="w-full mt-2 border-collapse border border-gray-300">
-                    <thead>
-                        <tr class="bg-gray-200">
-                            <th class="border p-2">📦 Order ID</th>
-                            <th class="border p-2">👤 Customer</th>
-                            <th class="border p-2">🔢 Quantity</th>
-                            <th class="border p-2">💵 Subtotal</th>
-                            <th class="border p-2">💳 Payment Status</th>
-                            <th class="border p-2">📆 Order Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order_item in order_items %}
-                            <tr>
-                                <td class="border p-2">{{ order_item.order.id }}</td>
-                                <td class="border p-2">{{ order_item.order.customer.user.username }}</td>
-                                <td class="border p-2">{{ order_item.quantity |intcomma }}</td>
-                                <td class="border p-2">${{ order_item.subtotal|floatformat:2 }}</td>
-                                <td class="border p-2">{{ order_item.order.payment_status }}</td>
-                                <td class="border p-2">{{ order_item.order.ordered_at }}</td>
+                <div class="overflow-x-auto">
+                    <table class="w-full mt-2 border-collapse border border-gray-300 min-w-[600px]">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="border p-2">📦 Order ID</th>
+                                <th class="border p-2">👤 Customer</th>
+                                <th class="border p-2">🔢 Quantity</th>
+                                <th class="border p-2">💵 Subtotal</th>
+                                <th class="border p-2">💳 Payment Status</th>
+                                <th class="border p-2">📆 Order Date</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for order_item in order_items %}
+                                <tr>
+                                    <td class="border p-2">{{ order_item.order.id }}</td>
+                                    <td class="border p-2">{{ order_item.order.customer.user.username }}</td>
+                                    <td class="border p-2">{{ order_item.quantity |intcomma }}</td>
+                                    <td class="border p-2">${{ order_item.subtotal|floatformat:2 }}</td>
+                                    <td class="border p-2">{{ order_item.order.payment_status }}</td>
+                                    <td class="border p-2">{{ order_item.order.ordered_at }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
                 <p class="text-gray-500">No orders for this product.</p>
             {% endif %}
