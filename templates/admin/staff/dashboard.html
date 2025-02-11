@@ -98,7 +98,7 @@
                         {% endfor %}
                     </ul>
                     <!-- View More Button -->
-                    <a href="{% url 'sold_products_list' %}" class="mt-3 w-100 text-primary">View More</a>
+                    <a href="{% url 'manager_sold_products_list' %}" class="mt-3 w-100 text-primary">View More</a>
                 </div>
             </div>
         </div>
@@ -135,7 +135,7 @@
                         {% endfor %}
                     </ul>
                     <!-- View All Button -->
-                    <a href="{% url 'customer_contributions' %}" class="btn btn-primary mt-3">View All</a>
+                    <a href="{% url 'manager_customer_contributions' %}" class="btn btn-primary mt-3">View All</a>
                 </div>
             </div>
         </div>
@@ -152,7 +152,7 @@
                         {% endfor %}
                     </ul>
                     <!-- View All Customers Link -->
-                    <a href="{% url 'all_customers' %}" class="mt-3 w-100 text-primary">View All</a>
+                    <a href="{% url 'manager_all_customers' %}" class="mt-3 w-100 text-primary">View All</a>
                 </div>
             </div>
         </div>
@@ -171,7 +171,7 @@
                         {% endfor %}
                     </ul>
                     <!-- Button or Link to View All Products -->
-                    <a href="{% url 'all_products' %}" class="btn btn-primary mt-3">View stock</a>
+                    <a href="{% url 'manager_all_products' %}" class="btn btn-primary mt-3">View stock</a>
                 </div>
             </div>
         </div>

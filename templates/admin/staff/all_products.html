@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'manager_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
+    <h2>All Products</h2>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Price (RWF)</th>
+                <th>current Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.price |intcomma }}</td>
+                    <td>{{ product.stock|intcomma  }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No products available</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'manager_dashboard' %}" class="btn btn-info mt-3">Back Dashboard</a>
+</div>
+{% endblock %}

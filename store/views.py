@@ -1820,3 +1820,45 @@ def manager_confirm_delivery(request, order_id):
         messages.error(request, f"Order #{order.id} cannot be delivered yet.")
 
     return redirect('orders_management', order_id=order.id)
+
+
+
+
+
+
+
+def manager_sold_products_list(request):
+
+    products = Product.objects.all().annotate(
+        total_sold=Sum('orderitem__quantity')
+    )
+    return render(request, 'admin/staff/sold_products_list.html', {'products': products})
+
+
+def manager_all_customers(request):
+    # Fetch all customers ordered by the most recent registration date
+    customers = Customer.objects.all().order_by('-user__date_joined')  # Ordering by the related User's join date
+
+    return render(request, 'admin/staff/all_customers.html', {'customers': customers})
+
+
+
+
+
+def manager_customer_contributions(request):
+    # Annotate each customer with their total spending
+    customers = Customer.objects.annotate(
+        total_spent=Sum('order__total_price', filter=Q(order__payment_status='Confirmed'))
+    ).order_by('-total_spent')
+
+    return render(request, 'admin/staff/customer_contributions.html', {'customers': customers})
+
+
+
+@staff_member_required
+def manager_all_products(request):
+
+    products = Product.objects.all()
+
+    return render(request, 'admin/staff/all_products.html', {'products': products})
+

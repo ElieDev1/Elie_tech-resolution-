@@ -118,6 +118,12 @@ urlpatterns = [
     path('manager/admin-panel/orders/approve/<int:order_id>/', views.manager_approve_payment, name='manager_approve_payment'),
     path('manager/confirm-delivery/<int:order_id>/', views.manager_confirm_delivery, name='manager_confirm_delivery'),
 
+
+    path('manager/sold-products/', views.manager_sold_products_list, name='manager_sold_products_list'),
+    path('manager/all-customers/', views.manager_all_customers, name='manager_all_customers'),
+    path('manager/customer-contributions/', views.manager_customer_contributions, name='manager_customer_contributions'),
+    path('admin-panel/all-products/', views.manager_all_products, name='manager_all_products'),
+
   
    
 
