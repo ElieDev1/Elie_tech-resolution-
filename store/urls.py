@@ -108,7 +108,17 @@ urlpatterns = [
     
     path('notifications/delete/<int:pk>/', views.delete_notification, name='delete_notification'),
     path('notifications/delete-selected/', views.delete_selected_notifications, name='delete_selected_notifications'),
-    
+
+    # manager(order)
+    path('orders_management/', views.order_manager, name='orders_management'),
+    path('manager/admin_order/<int:order_id>/', views.manager_order_detail, name='manager_order_detail'),
+    path('manager/panel/', views.manager_dashboard, name='manager_dashboard'),
+    path('manager/orders/<int:order_id>/delete/', views.manager_delete_order, name='manager_delete_order'),
+
+    path('manager/admin-panel/orders/approve/<int:order_id>/', views.manager_approve_payment, name='manager_approve_payment'),
+    path('manager/confirm-delivery/<int:order_id>/', views.manager_confirm_delivery, name='manager_confirm_delivery'),
+
+  
    
 
 

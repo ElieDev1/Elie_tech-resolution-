@@ -1639,3 +1639,184 @@ def delete_selected_notifications(request):
 
     return redirect('notification_list')  # Redirect back to list
 
+
+
+
+
+
+
+
+
+
+
+
+def manager_order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    return render(request, 'admin/staff/order_detail.html', {'order': order})
+
+
+
+@staff_member_required
+def order_manager(request):
+    today = timezone.now().date()
+
+    # Get filter parameters from request
+    status_filter = request.GET.get('status', None)
+    delivery_status_filter = request.GET.get('delivery_status', None)
+    date_filter = request.GET.get('date', None)
+    start_date = request.GET.get('start_date', None)
+    end_date = request.GET.get('end_date', None)
+
+    # Optimize query with select_related & prefetch_related
+    orders = Order.objects.prefetch_related(
+        'order_items__product'  # Prefetch related products
+    ).select_related(
+        'customer__user'  # Select related customer and user data
+    )
+
+    # Apply filters
+    if status_filter:
+        orders = orders.filter(payment_status=status_filter)
+
+    if delivery_status_filter:
+        orders = orders.filter(delivery_status=delivery_status_filter)
+
+    if date_filter == 'today':
+        orders = orders.filter(ordered_at__date=today)
+
+    if start_date and end_date:
+        orders = orders.filter(ordered_at__date__range=[start_date, end_date])
+
+    # Order by newest orders first
+    orders = orders.order_by('-ordered_at')
+
+    return render(request, 'admin/staff/orders.html', {'orders': orders})
+
+
+
+
+def manager_dashboard(request):
+    # Key Metrics
+    total_customers = Customer.objects.count()
+    total_orders = Order.objects.count()
+    total_revenue = Order.objects.filter(payment_status='Confirmed').aggregate(Sum('total_price'))['total_price__sum'] or 0
+    total_products = Product.objects.count()
+    total_comments = Comment.objects.count()
+    unread_messages = Message.objects.filter(is_read=False).count()
+
+    # Aggregating orders by delivery_status and payment_status separately
+    orders_by_status = list(Order.objects.values('delivery_status', 'payment_status')
+                            .annotate(count=Count('id')))
+
+    # Adjusting the aggregation to group the counts of both Pending and Confirmed payments for each delivery_status
+    delivery_status_counts = {}
+    for order in orders_by_status:
+        delivery_status = order['delivery_status']
+        payment_status = order['payment_status']
+        if delivery_status not in delivery_status_counts:
+            delivery_status_counts[delivery_status] = {'Pending': 0, 'Confirmed': 0}
+
+        if payment_status == 'Pending':
+            delivery_status_counts[delivery_status]['Pending'] += order['count']
+        elif payment_status == 'Confirmed':
+            delivery_status_counts[delivery_status]['Confirmed'] += order['count']
+
+    # Now we can prepare the data to display
+    orders_by_status_cleaned = [
+        {
+            'delivery_status': delivery_status,
+            'pending_count': counts['Pending'],
+            'confirmed_count': counts['Confirmed']
+        }
+        for delivery_status, counts in delivery_status_counts.items()
+    ]
+
+    # Aggregating revenue by category - joining OrderItem model
+    revenue_by_category = list(Product.objects
+        .values('category')
+        .annotate(total_sales=Sum('orderitem__subtotal'))
+        .filter(orderitem__order__payment_status='Confirmed'))  # Ensure we're only considering confirmed orders
+
+    # Convert Decimal values to float
+    revenue_by_category = [
+        {**item, 'total_sales': float(item['total_sales']) if item['total_sales'] else 0}
+        for item in revenue_by_category
+    ]
+
+    # Serialize the data to JSON format
+    orders_by_status_json = json.dumps(orders_by_status_cleaned)
+    revenue_by_category_json = json.dumps(revenue_by_category)
+
+    # Add more data for the template if needed
+    top_selling_products = Product.objects.annotate(
+        total_sold=Sum('orderitem__quantity')
+    ).order_by('-total_sold')[:5]
+
+    most_liked_products = Product.objects.annotate(
+        like_count=Count('likes')
+    ).order_by('-like_count')[:5]
+
+    top_customers = Customer.objects.annotate(
+        total_spent=Sum('order__total_price')
+    ).order_by('-total_spent')[:5]
+
+    new_customers = Customer.objects.filter(
+        user__date_joined__gte=datetime.today() - timedelta(days=30)
+    ).order_by('-user__date_joined')[:5]
+
+    low_stock_products = Product.objects.filter(stock__lt=10)
+
+    context = {
+        'total_customers': total_customers,
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'total_products': total_products,
+        'total_comments': total_comments,
+        'unread_messages': unread_messages,
+        'orders_by_status': orders_by_status_json,
+        'revenue_by_category': revenue_by_category_json,
+        'top_selling_products': top_selling_products,
+        'most_liked_products': most_liked_products,
+        'top_customers': top_customers,
+        'new_customers': new_customers,
+        'low_stock_products': low_stock_products,
+    }
+
+    return render(request, 'admin/staff/dashboard.html', context)
+
+
+
+
+def manager_delete_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.delete()
+    messages.success(request, "Order deleted successfully.")
+    return redirect('orders_management')
+
+
+# Approve Payment View
+def manager_approve_payment(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    if order.payment_status == 'Pending':  # Check if the payment is still pending
+        order.payment_status = 'Confirmed'
+        order.save()
+    return redirect('orders_management')  # Redirect to the order management page after approving*``
+
+
+
+
+
+
+def manager_confirm_delivery(request, order_id):
+    # Fetch the order using the provided order_id
+    order = get_object_or_404(Order, id=order_id)
+
+    # Only allow confirmation if payment is confirmed and status is not already 'Delivered'
+    if order.payment_status == 'Confirmed' and order.delivery_status != 'Delivered':
+        order.delivery_status = 'Delivered'
+        order.save()
+        messages.success(request, f"Order #{order.id} has been delivered successfully.")
+    else:
+        messages.error(request, f"Order #{order.id} cannot be delivered yet.")
+
+    return redirect('orders_management', order_id=order.id)

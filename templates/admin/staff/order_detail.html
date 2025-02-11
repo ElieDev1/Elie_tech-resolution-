@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">Order 000{{ order.id }} Details   <strong style=" color:blue" >{{ order.total_price|intcomma  }} RWF</strong></h2>
+    <hr>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Order Details (Left Column) -->
+        <div class="bg-white border-2 border-gray-300 p-6 rounded-lg shadow-md">
+            <p><strong>👤 Customer:</strong> {{ order.customer.user.username }}</p>
+            <p><strong>💳 Payment Status:</strong> {{ order.payment_status }}</p>
+            
+            <h3 class="text-xl font-bold mt-4">📦 Products</h3>
+            <ul>
+                {% for item in order.order_items.all %}
+                    <li class="flex items-center space-x-3">
+                        <!-- Product Image -->
+                        {% if item.product.product_images.all %}
+                            <img src="{{ item.product.product_images.first.image.url }}" 
+                                 alt="{{ item.product.name }}" 
+                                 class="w-16 h-16 object-cover rounded-md">
+                        {% else %}
+                            <span class="w-16 h-16 bg-gray-300 rounded-md flex items-center justify-center text-sm text-gray-500">
+                                No Image
+                            </span>
+                        {% endif %}
+                        <div>
+                            <strong>{{ item.product.name }}</strong> - 
+                            <span class="font-semibold">{{ item.quantity }}</span> units
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <h3 class="text-xl font-bold mt-4">💰 Payment Proof</h3>
+            {% if order.payment_message %}
+                <p>📩 {{ order.payment_message }}</p>
+            {% else %}
+                <p class="text-gray-600 italic">⚠️ No payment message provided.</p>
+            {% endif %}
+            
+            {% if order.payment_image %}
+                <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-64 rounded-lg shadow-md mt-3">
+            {% else %}
+                <p class="text-gray-600 italic">⚠️ No payment image provided.</p>
+            {% endif %}
+            
+
+            <div class="mt-4 d-flex flex-column flex-sm-row gap-2">
+                <a href="{% url 'orders_management' %}" class="btn btn-secondary w-100 w-sm-auto">⬅️ Back to Orders</a>
+                <form action="{% url 'manager_delete_order' order.id %}" method="post" class="w-100 w-sm-auto">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger w-100 w-sm-auto" onclick="return confirm('Are you sure?')">
+                        🗑️ Delete Order
+                    </button>
+                </form>
+            </div>
+            
+        </div>
+
+        <!-- Customer Information (Right Column) -->
+        <div class="bg-white border-2 border-gray-300 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">📋 Customer Information</h3>
+            <p><strong>Name:</strong> {{ order.customer.user.first_name }} {{ order.customer.user.last_name }}</p>
+            <p><strong>Email:</strong> {{ order.customer.user.email }}</p>
+            <p><strong>Phone:</strong> {{ order.customer.phone_number }}</p>
+            <p><strong>Address:</strong> {{ order.customer.address }}</p>
+
+            <h3 class="text-xl font-bold mt-4">🔑 User Login Information</h3>
+            <p><strong>Username:</strong> {{ order.customer.user.username }}</p>
+            <p><strong>Registration Date:</strong> {{ order.customer.user.date_joined|date:"d M Y" }}</p>
+            {% if order.payment_status == 'Confirmed' %}
+                {% if order.delivery_status != 'Delivered' %}
+                    <div class="mt-4">
+                        <form method="post" action="{% url 'confirm_delivery' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="bg-yellow-600 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-700 transition duration-300 w-full md:w-full">
+                                🚚 Confirm Delivery
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="mt-4">
+                        <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-200 text-green-800">
+                            ✅ Delivered
+                        </span>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+    <!-- Include Bootstrap CSS and JavaScript (for Bootstrap 5) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+      <!-- Tailwind CSS -->
+      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+      <!-- Font Awesome -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+      <!-- Bootstrap CSS CDN -->
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+      <!-- Bootstrap JS CDN (for interactive components) -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

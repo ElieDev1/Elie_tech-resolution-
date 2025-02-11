@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+    <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
+        <h2 class="text-3xl font-bold mb-6 text-gray-800">Order Management, manager: {{ request.user.get_full_name }}</h2>
+     
+        
+        
+        <!-- Filter Section -->
+        <div class="flex flex-wrap gap-4 mb-6">
+            <!-- Filter by Payment Status -->
+            <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                <label for="status" class="font-semibold text-gray-700">Payment Status:</label>
+                <select name="status" id="status" class="p-2 border border-gray-300 rounded w-full md:w-auto">
+                    <option value="">All</option>
+                    <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
+                    <option value="Confirmed" {% if request.GET.status == "Confirmed" %}selected{% endif %}>Confirmed</option>
+                </select>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full md:w-auto">
+                    Filter
+                </button>
+            </form>
+        
+            <!-- Filter by Delivery Status -->
+            <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                <label for="delivery_status" class="font-semibold text-gray-700">Delivery Status:</label>
+                <select name="delivery_status" id="delivery_status" class="p-2 border border-gray-300 rounded w-full md:w-auto">
+                    <option value="">All</option>
+                    <option value="Pending" {% if request.GET.delivery_status == "Pending" %}selected{% endif %}>Pending</option>
+                    <option value="Shipped" {% if request.GET.delivery_status == "Shipped" %}selected{% endif %}>Shipped</option>
+                    <option value="Delivered" {% if request.GET.delivery_status == "Delivered" %}selected{% endif %}>Delivered</option>
+
+                </select>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full md:w-auto">
+                    Filter
+                </button>
+            </form>
+        
+            <!-- Filter by Date (Today) -->
+            <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                <input type="hidden" name="status" value="{{ request.GET.status }}">
+                <input type="hidden" name="delivery_status" value="{{ request.GET.delivery_status }}">
+                <button type="submit" name="date" value="today" class="bg-green-500 text-white px-4 py-2 rounded-lg w-full md:w-auto">
+                    Today's Orders
+                </button>
+            </form>
+        
+            <!-- Filter by Date Range -->
+            <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                <label for="start_date" class="font-semibold text-gray-700">Start Date:</label>
+                <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}" class="p-2 border border-gray-300 rounded">
+        
+                <label for="end_date" class="font-semibold text-gray-700">End Date:</label>
+                <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}" class="p-2 border border-gray-300 rounded">
+        
+                <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded-lg">
+                    Apply Date Range
+                </button>
+            </form>
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'manager_dashboard' %}" class="btn btn-secondary w-sm-auto">⬅️ Back to dashboard</a>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for order in orders %}
+            <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-400">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="font-semibold text-lg text-gray-800">
+                        🛒 Order ID: 000{{ order.id }}
+                    </div>
+                    
+                    <div class="text-sm text-gray-600">
+                        👤<span class="font-semibold">{{ order.customer.user.username }}</span>
+                    </div>
+                </div>
+            
+                <div class="space-y-3">
+                    <div>
+                        <strong class="text-gray-700">📦 Products:</strong>
+                        <ul class="list-disc pl-5 text-gray-800">
+                            {% for item in order.order_items.all %}
+                                <li class="flex items-center space-x-3">
+                                    <!-- Product Image -->
+                                    {% if item.product.product_images.all %}
+                                        <img src="{{ item.product.product_images.first.image.url }}" 
+                                             alt="{{ item.product.name }}" 
+                                             class="w-16 h-16 object-cover rounded-md">
+                                    {% else %}
+                                        <span class="w-16 h-16 bg-gray-300 rounded-md flex items-center justify-center text-sm text-gray-500">
+                                            No Image
+                                        </span>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ item.product.name }}</strong> - 
+                                        <span class="font-semibold">{{ item.quantity }}</span> units
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+            
+                    <div>
+                        <strong class="text-gray-700">💳 Payment Status:</strong>
+                        {% if order.payment_status == 'Confirmed' %}
+                            <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-200 text-green-800">
+                                ✅ Confirmed
+                            </span>
+                        {% else %}
+                            <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-red-200 text-red-800">
+                                ⚠️ Pending
+                            </span>
+                        {% endif %}
+                        <strong>{{ order.total_price |intcomma }} RWF</strong>
+                    </div>
+            
+                    <div class="bg-white shadow-md rounded-lg p-4 border border-gray-300">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">💰 Payment Proof:</h3>
+            
+                        <div class="flex flex-wrap gap-3">
+                            {% if order.payment_message %}
+                                <button 
+                                    class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition duration-300 ease-in-out w-full md:w-auto"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#paymentMessageModal-{{ order.id }}">
+                                    📩 View Payment Message
+                                </button>
+                            {% endif %}
+            
+                            {% if order.payment_image %}
+                                <button 
+                                    class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition duration-300 ease-in-out w-full md:w-auto"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#paymentImageModal-{{ order.id }}">
+                                    🖼️ View Payment Image
+                                </button>
+                            {% endif %}
+            
+                            <a href="{% url 'manager_order_detail' order.id %}" 
+                               class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition duration-300 ease-in-out w-full md:w-auto text-center no-underline">
+                                🔍 View Details
+                            </a>
+                            {% if order.payment_status == 'Pending' %}
+                            <div class="mt-4">
+                                <form method="post" action="{% url 'manager_approve_payment' order.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-300 w-full md:w-full">
+                                        ✅ Approve Payment
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+            
+                        {% if not order.payment_message and not order.payment_image %}
+                            <p class="text-gray-600 italic mt-2">⚠️ No payment proof provided.</p>
+            
+                            <div class="flex flex-wrap gap-3">
+                               
+                                <form action="{% url 'manager_delete_order' order.id %}" method="post" class="w-full md:w-auto">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition duration-300 ease-in-out w-full md:w-auto"
+                                            onclick="return confirm('Are you sure?')">
+                                        🗑️ Delete
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if order.payment_status != 'pending' %}
+                {% if order.delivery_status != 'Delivered' %}
+                    <div class="mt-4">
+                        <form method="post" action="{% url 'confirm_delivery' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="bg-yellow-600 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-700 transition duration-300 w-full md:w-full">
+                                🚚 Confirm Delivery
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="mt-4">
+                        <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full bg-green-200 text-green-800">
+                            ✅ Delivered
+                        </span>
+                    </div>
+                {% endif %}
+                {% endif %}
+            
+            
+            </div>
+          
+        
+                   
+
+                <!-- Payment Message Modal -->
+                {% if order.payment_message %}
+                <div class="modal fade" id="paymentMessageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentMessageModalLabel-{{ order.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title text-gray-800" id="paymentMessageModalLabel-{{ order.id }}">
+                                    💬 Payment Message for Order 000{{ order.id }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-gray-700">{{ order.payment_message }}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Payment Image Modal -->
+                {% if order.payment_image %}
+                <div class="modal fade" id="paymentImageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentImageModalLabel-{{ order.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title text-gray-800" id="paymentImageModalLabel-{{ order.id }}">
+                                    🖼️ Payment Image for Order 000{{ order.id }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-full rounded-lg shadow-lg">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Include Bootstrap CSS and JavaScript (for Bootstrap 5) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+      <!-- Tailwind CSS -->
+      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+      <!-- Font Awesome -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+      <!-- Bootstrap CSS CDN -->
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+      <!-- Bootstrap JS CDN (for interactive components) -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
