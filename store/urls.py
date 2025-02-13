@@ -18,6 +18,8 @@ urlpatterns = [
     path('products/', views.product_list, name='product_list'),
     path('chekout/', views.checkout, name='checkout'),
     path('process-checkout/', views.process_checkout, name='process_checkout'),
+
+    path('my_dashboard/', views.team_dashboard, name='team_dashboard'),
    
 
 

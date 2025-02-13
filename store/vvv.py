@@ -26,7 +26,7 @@ from django.http import HttpResponse
 from django.conf import settings
 
 
-@csrf_exempt
+
 def home(request):
     # Products with like counts (for the main grid)
     products_with_likes = Product.objects.annotate(likes_count=Count('likes')).order_by('-likes_count')
@@ -60,59 +60,26 @@ def home(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@csrf_exempt
 def product_detail(request, product_id):
-    product = get_object_or_404(Product.objects.prefetch_related('product_images'), id=product_id)
+    # Get the product or return a 404 if it doesn't exist
+    product = get_object_or_404(Product, id=product_id)
 
-    # Fetch related products from the same category, excluding the current product
-    related_products = Product.objects.filter(category=product.category).exclude(id=product.id).prefetch_related('product_images')[:50]  
-
+    # Handle new comment posting
     if request.method == "POST":
         comment_content = request.POST.get('comment_content')
         if comment_content:
-            user = request.user if request.user.is_authenticated else None  # Allow anonymous users
+            customer = get_object_or_404(Customer, user=request.user)
+            # Create and save the comment
             Comment.objects.create(
-                user=user,
+                user=request.user,  # The user posting the comment
                 product=product,
                 content=comment_content
             )
-        return redirect('product_detail', product_id=product.id)
+        return redirect('product_detail', product_id=product.id)  # Redirect to avoid re-posting on refresh
 
-    return render(request, 'store/product_detail.html', {
-        'product': product,
-        'related_products': related_products
-    })
+    # Return the page with product details and comments
+    return render(request, 'store/product_detail.html', {'product': product})
 
-
-
-
-
-
-
-
-
-
-@csrf_exempt
 def register(request):
     if request.method == 'POST':
         # Capture data from the form safely
@@ -195,7 +162,7 @@ def logout_user(request):
 
 
 
-@csrf_exempt
+
 @login_required
 def profile_view(request):
     customer = get_object_or_404(Customer, user=request.user)
@@ -206,7 +173,7 @@ def profile_view(request):
     return render(request, 'profile.html', {'customer': customer, 'orders': orders})
 
 
-@csrf_exempt
+
 @login_required
 def order_list(request):
     try:
@@ -249,7 +216,7 @@ def add_comment(request, pk):
     return redirect('product_detail', pk=pk)
 
 
-@csrf_exempt
+
 def product_list(request):
     query = request.GET.get('q')
     category = request.GET.get('category')
@@ -374,7 +341,7 @@ def remove_from_cart(request, product_id):
 
     return redirect('cart_view')
 
-@csrf_exempt
+
 def clear_cart(request):
     request.session['cart'] = {}  # Empty the cart
     messages.success(request, "Your cart has been cleared.")
@@ -472,7 +439,7 @@ def cart_view(request):
         'total_price': total_price
     })
 
-@csrf_exempt
+
 def about_view(request):
     team_members = TeamMember.objects.all()
     return render(request, 'about.html', {'team_members': team_members})
@@ -594,9 +561,6 @@ def process_checkout(request):
 # ---------------------------------------------------------------
 # Message Page View
 # ---------------------------------------------------------------
-
-
-
 @csrf_exempt
 def message_page(request):
     if not request.user.is_authenticated:
@@ -607,34 +571,18 @@ def message_page(request):
     if request.user.is_staff:
         customers_who_messaged = User.objects.filter(
             Q(sent_messages__recipient=request.user) | Q(received_messages__sender=request.user)
-        ).distinct().annotate(
-            unread_count=Count('sent_messages', filter=Q(sent_messages__recipient=request.user, sent_messages__is_read=False))
-        )
+        ).distinct()
 
     # Get all messages for the current user
     all_messages = Message.objects.filter(
         Q(recipient=request.user) | Q(sender=request.user)
     ).order_by('timestamp')
 
-    # Fetch all notifications for the current user
-    all_notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-
-    # Admins can delete notifications
-    if request.method == 'POST' and request.user.is_staff:
-        notification_id = request.POST.get('notification_id')
-        if notification_id:
-            try:
-                notification = Notification.objects.get(id=notification_id, user=request.user)
-                notification.delete()  # Delete the notification
-            except Notification.DoesNotExist:
-                pass  # Handle if notification doesn't exist (optional)
-
     return render(request, 'message.html', {
         'all_messages': all_messages,
         'admins': User.objects.filter(is_staff=True),
         'customers_who_messaged': customers_who_messaged,
         'selected_customer': None,
-        'notifications': all_notifications,
     })
 
 
@@ -742,7 +690,7 @@ def unread_message_count(request):
 
 
 from django.utils.dateparse import parse_date  # ✅ Import parse_date
-@csrf_exempt
+
 @staff_member_required
 def admin_products(request):
     products = Product.objects.all().prefetch_related('product_images')
@@ -779,7 +727,7 @@ def admin_products(request):
 
 
 
-@csrf_exempt
+
 @staff_member_required
 def admin_orders(request):
     today = timezone.now().date()
@@ -841,17 +789,17 @@ def admin_orders(request):
 
 
 
-@csrf_exempt
+
 @staff_member_required
 def admin_users(request):
     users = User.objects.select_related('customer').all()
     return render(request, 'admin/users.html', {'users': users})
-@csrf_exempt
+
 @staff_member_required
 def admin_messages(request):
     messages = Message.objects.select_related('sender', 'recipient').all()
     return render(request, 'admin/messages.html', {'messages': messages})
-@csrf_exempt
+
 @staff_member_required
 def admin_team(request):
     team = TeamMember.objects.all()
@@ -1071,7 +1019,7 @@ def admin_delete_message(request, message_id):
 
 
 
-@csrf_exempt
+
 @staff_member_required
 def admin_product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -1087,7 +1035,7 @@ def admin_product_detail(request, product_id):
 
 
 
-@csrf_exempt
+
 def admin_view_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     orders = Order.objects.filter(customer__user=user)
@@ -1101,7 +1049,7 @@ def admin_view_user(request, user_id):
         'comments': comments,
         'liked_products': liked_products
     })
-@csrf_exempt
+
 def admin_search(request):
     query = request.GET.get('query', '')
 
@@ -1182,7 +1130,7 @@ def payment_method(request, order_id):
 
 
 
-@csrf_exempt
+
 @login_required
 def order_detail(request, order_id):
     # Fetch the order by order_id and ensure it exists
@@ -1242,7 +1190,6 @@ def payment_method(request, order_id):
 
 
 # Approve Payment View
-@csrf_exempt
 def approve_payment(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     if order.payment_status == 'Pending':  # Check if the payment is still pending
@@ -1252,7 +1199,7 @@ def approve_payment(request, order_id):
 
 
 
-@csrf_exempt
+
 @staff_member_required
 def admin_comment_list(request):
     product_id = request.GET.get('product_id')  # Get product ID from query parameters
@@ -1270,7 +1217,7 @@ def admin_comment_list(request):
     })
 
 
-@csrf_exempt
+
 @staff_member_required
 def admin_view_comment(request, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)  # Use Comment, not comment
@@ -1296,7 +1243,7 @@ def admin_delete_comment(request, comment_id):
         comment.delete()
         return redirect('admin_comment_list')
     return HttpResponseForbidden("Invalid request method.")
-@csrf_exempt
+
 @login_required
 def cancel_order(request, order_id):
     # Retrieve the order or return a 404 error if not found
@@ -1316,7 +1263,7 @@ def cancel_order(request, order_id):
 
 
 
-@csrf_exempt
+
 def confirm_delivery(request, order_id):
     # Fetch the order using the provided order_id
     order = get_object_or_404(Order, id=order_id)
@@ -1332,7 +1279,7 @@ def confirm_delivery(request, order_id):
     return redirect('admin_order_detail', order_id=order.id)
 
 
-@csrf_exempt
+
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
@@ -1351,11 +1298,11 @@ def order_detail(request, order_id):
 
 
 
-@csrf_exempt
+
 def admin_order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     return render(request, 'admin/order_detail.html', {'order': order})
-@csrf_exempt
+
 def delete_order(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     order.delete()
@@ -1370,7 +1317,7 @@ def delete_order(request, order_id):
 
 
 
-@csrf_exempt
+
 def admin_dashboard(request):
     # Key Metrics
     total_customers = Customer.objects.count()
@@ -1461,7 +1408,7 @@ def admin_dashboard(request):
     return render(request, 'admin/dashboard.html', context)
 
 
-@csrf_exempt
+
 @staff_member_required
 def all_products(request):
 
@@ -1488,7 +1435,7 @@ def all_customers(request):
 
 
 
-@csrf_exempt
+
 def customer_contributions(request):
     # Annotate each customer with their total spending
     customers = Customer.objects.annotate(
@@ -1693,7 +1640,7 @@ def manager_order_detail(request, order_id):
     return render(request, 'admin/staff/order_detail.html', {'order': order})
 
 
-@csrf_exempt
+
 @staff_member_required
 def order_manager(request):
     today = timezone.now().date()
@@ -1824,7 +1771,7 @@ def manager_dashboard(request):
 
 
 
-@csrf_exempt
+
 def manager_delete_order(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     order.delete()
@@ -1833,7 +1780,6 @@ def manager_delete_order(request, order_id):
 
 
 # Approve Payment View
-@csrf_exempt
 def manager_approve_payment(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     if order.payment_status == 'Pending':  # Check if the payment is still pending
@@ -1845,7 +1791,7 @@ def manager_approve_payment(request, order_id):
 
 
 
-@csrf_exempt
+
 def manager_confirm_delivery(request, order_id):
     # Fetch the order using the provided order_id
     order = get_object_or_404(Order, id=order_id)
@@ -1863,7 +1809,7 @@ def manager_confirm_delivery(request, order_id):
 
 
 
-@csrf_exempt
+
 def manager_sold_products_list(request):
 
     products = Product.objects.all().annotate(
@@ -1871,7 +1817,7 @@ def manager_sold_products_list(request):
     )
     return render(request, 'admin/staff/sold_products_list.html', {'products': products})
 
-@csrf_exempt
+
 def manager_all_customers(request):
     # Fetch all customers ordered by the most recent registration date
     customers = Customer.objects.all().order_by('-user__date_joined')  # Ordering by the related User's join date
@@ -1881,7 +1827,7 @@ def manager_all_customers(request):
 
 
 
-@csrf_exempt
+
 def manager_customer_contributions(request):
     # Annotate each customer with their total spending
     customers = Customer.objects.annotate(
@@ -1891,7 +1837,7 @@ def manager_customer_contributions(request):
     return render(request, 'admin/staff/customer_contributions.html', {'customers': customers})
 
 
-@csrf_exempt
+
 @staff_member_required
 def manager_all_products(request):
 
@@ -1901,91 +1847,3 @@ def manager_all_products(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from django.db.models.functions import TruncDay
-from datetime import date, timedelta, datetime
-from decimal import Decimal  # Import Decimal
-
-def team_dashboard(request):
-    today = date.today()
-    start_date = today - timedelta(days=30)
-    
-    # Get confirmed orders in the last 30 days
-    orders = Order.objects.filter(
-        ordered_at__date__gte=start_date,
-        payment_status="Confirmed"
-    )
-    
-    # Calculate total revenue and profit (20% of revenue) using Decimal
-    total_revenue = orders.aggregate(total=Sum('total_price'))['total'] or Decimal('0')
-    total_profit = total_revenue * Decimal('0.2')
-
-    # Aggregate daily revenue and calculate profit (20% margin)
-    daily_revenue_qs = orders.annotate(day=TruncDay('ordered_at')).values('day').annotate(
-        total_revenue=Sum('total_price')
-    ).order_by('day')
-    
-    daily_revenue = []
-    for entry in daily_revenue_qs:
-        day = entry['day'].strftime('%Y-%m-%d')
-        revenue = float(entry['total_revenue'])
-        profit = revenue * 0.2  # Safe to use float here for charting
-        daily_revenue.append({'day': day, 'revenue': revenue, 'profit': profit})
-    
-    # Aggregate daily new customers based on User.date_joined
-    daily_customers_qs = User.objects.filter(date_joined__date__gte=start_date).annotate(
-        day=TruncDay('date_joined')
-    ).values('day').annotate(
-        count=Count('id')
-    ).order_by('day')
-    
-    daily_customers = []
-    for entry in daily_customers_qs:
-        day = entry['day'].strftime('%Y-%m-%d')
-        count = entry['count']
-        daily_customers.append({'day': day, 'count': count})
-    
-    # Aggregate daily order count
-    daily_orders_qs = orders.annotate(day=TruncDay('ordered_at')).values('day').annotate(
-        count=Count('id')
-    ).order_by('day')
-    
-    daily_orders = []
-    for entry in daily_orders_qs:
-        day = entry['day'].strftime('%Y-%m-%d')
-        count = entry['count']
-        daily_orders.append({'day': day, 'count': count})
-    
-    # Generate a greeting based on the current time
-    current_hour = datetime.now().hour
-    if current_hour < 12:
-        greeting = "Good Morning"
-    elif current_hour < 18:
-        greeting = "Good Afternoon"
-    else:
-        greeting = "Good Evening"
-    
-    context = {
-        'daily_revenue': daily_revenue,
-        'daily_customers': daily_customers,
-        'daily_orders': daily_orders,
-        'total_revenue': total_revenue,
-        'total_profit': total_profit,
-        'greeting': greeting,
-    }
-    return render(request, 'team_dashboard.html', context)

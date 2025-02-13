@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-    <div class="row w-75">
+    <div class="row w-100">
         <!-- Registration Form Card -->
         <div class="col-md-6 d-flex align-items-stretch">
             <div class="card shadow-lg p-4" style="border-radius: 10px; background-color: #f8f9fa;">
@@ -12,23 +12,23 @@
                         {% csrf_token %}
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="username" class="form-label">Username 🧑‍💻</label>
+                                <label for="username" class="form-label">Username </label>
                                 <input type="text" name="username" id="username" class="form-control" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">First Name ✨</label>
+                                <label for="first_name" class="form-label">First Name </label>
                                 <input type="text" name="first_name" id="first_name" class="form-control" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Last Name ✨</label>
+                                <label for="last_name" class="form-label">Last Name </label>
                                 <input type="text" name="last_name" id="last_name" class="form-control" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email 📧</label>
+                                <label for="email" class="form-label">Email </label>
                                 <input type="email" name="email" id="email" class="form-control" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">Password 🔒</label>
+                                <label for="password" class="form-label">Password </label>
                                 <div class="input-group">
                                     <input type="password" name="password" id="password" class="form-control" required>
                                     <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password', 'togglePasswordIcon1')">
@@ -38,7 +38,7 @@
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="confirm_password" class="form-label">Confirm Password 🔒</label>
+                                <label for="confirm_password" class="form-label">Confirm Password </label>
                                 <div class="input-group">
                                     <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
                                     <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirm_password', 'togglePasswordIcon2')">
@@ -47,17 +47,30 @@
                                 </div>
                             </div>
                             
-                            
                             <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Phone Number 📱</label>
+                                <label for="phone" class="form-label">Phone Number </label>
                                 <input type="text" name="phone" id="phone" class="form-control" required>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="address" class="form-label">Address 🏠</label>
+                            <label for="address" class="form-label">Address </label>
                             <textarea name="address" id="address" class="form-control" rows="2" required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 mt-3">Register 🛒</button>
+
+                        <!-- Terms and Conditions Checkbox -->
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="accept_terms" required>
+                            <label class="form-check-label" for="accept_terms">
+                                I accept the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a> 📜
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-3" id="register_button" disabled>Register 🛒</button>
+                        <!-- Log in prompt if the user already has an account -->
+                        <p class="text-center mt-2">
+                            Already have an account? <a href="{% url 'login' %}" class="text-primary">Log in here</a>.
+                        </p>
+
                     </form>
                 </div>
             </div>
@@ -81,6 +94,76 @@
         </div>
     </div>
 </div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions 📜</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="terms-policy">
+                    <li>Orders under <strong>10,000 RWF</strong> require the customer to pay the delivery fee upon delivery. 🚚</li>
+                    <li>Free delivery is offered on orders above <strong>10,000 RWF</strong>. 🆓</li>
+                    <li>All payments must be made via <strong>MTN MoMoPay</strong>. 💳</li>
+                    <li>Products come with a <strong>6-month to 1-year warranty</strong>. 📆</li>
+                    <li>Returns are accepted within <strong>2 days</strong> if the product is defective. 🔄</li>
+                    <li>Order cancellations are allowed within <strong>1 hour</strong> of placing an order and payment. ⏳</li>
+                    <li>If an order remains unpaid for more than <strong>24 hours</strong> without proof of payment, it will be automatically canceled and deleted. ⏳❌</li>
+                    <li>For any misunderstandings or additional details about a product, you can chat with customer service and negotiate before purchasing. 💬🤝</li>
+                    <li>Once purchased, products are non-returnable unless defective, as we provide sufficient product descriptions. 📦❌</li>
+                    <li>Users must provide accurate delivery details to avoid issues. 📍</li>
+                    <li>Elie Tech is not responsible for damages caused by misuse of products. ⚠️</li>
+                    <li>All orders are processed within <strong>24-48 hours</strong> after payment confirmation. ⏳📦</li>
+                    <li>Delivery times vary by location but typically take <strong>1-3 days</strong>. 🚀</li>
+                    <li>Customers must be available to receive deliveries; failed deliveries may incur extra charges. 📦❌</li>
+                    <li>Customers will receive an order confirmation and tracking details via email or SMS. 📲📧</li>
+                    <li>Prices are subject to change without prior notice due to market fluctuations. 📉📈</li>
+                    <li>Discounts and promotions are valid for a limited time and cannot be combined with other offers. 🎉🛒</li>
+                    <li>Elie Tech reserves the right to refuse or cancel any order due to fraud or suspicious activity. 🚨</li>
+                    <li>Customer data is protected and will not be shared with third parties without consent. 🔒</li>
+                    <li>By placing an order, customers agree to abide by Elie Tech's terms and conditions. ✅</li>
+                    <li>In case of disputes, Elie Tech management will have the final decision. ⚖️</li>
+                    <li>Customers must create an account to place an order, ensuring secure transactions. 🔐</li>
+                    <li>Orders are processed only after payment confirmation. 🚀</li>
+                    <li>Customers can modify their order details within <strong>30 minutes</strong> of placing an order. ✏️</li>
+                    <li>Refunds are processed within <strong>5-7 business days</strong> for eligible returns. 💰</li>
+                    <li>Product availability is subject to stock; orders may be canceled if an item is out of stock. ⛔</li>
+                    <li>Customers should inspect the product upon delivery before accepting it. 🔍📦</li>
+                    <li>Delivery personnel are not responsible for setting up or installing purchased items. 🛠️</li>
+                    <li>We reserve the right to change or update our terms at any time without prior notice. 🔄</li>
+                    <li>Warranty claims must be accompanied by proof of purchase (receipt or order confirmation). 🏷️</li>
+                    <li>Personalized or customized products cannot be returned or exchanged. 🎨❌</li>
+                    <li>Discount codes and coupons must be applied at checkout and cannot be added later. 🎟️</li>
+                    <li>Orders marked as “delivered” by the courier service are considered completed. 📦✅</li>
+                    <li>If a package is lost during transit, Elie Tech will work with the courier for a resolution. 📦❓</li>
+                    <li>Customers are responsible for entering the correct shipping address; we are not liable for misdelivery. 📍❌</li>
+                    <li>Elie Tech is not responsible for compatibility issues with third-party accessories. 🔌⚠️</li>
+                    <li>We do not ship internationally; orders are limited to specified delivery regions. 🌍✖️</li>
+                    <li>Bulk orders may require additional processing time and approval. 📦📋</li>
+                    <li>Product colors may vary slightly from images due to lighting and screen settings. 🎨👀</li>
+                    <li>Customers are encouraged to review product specifications carefully before purchasing. 📜</li>
+                    <li>By using our website, customers agree to abide by our privacy policy and data handling rules. 🔏</li>
+                </ul>
+            </div>
+            
+            <style>
+                .terms-policy {
+                    font-size: 12px;
+                    color: #666;
+                    line-height: 1.4;
+                }
+            </style>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function togglePassword(fieldId, iconId) {
         let field = document.getElementById(fieldId);
@@ -88,14 +171,16 @@
     
         if (field.type === "password") {
             field.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
+            icon.classList.replace("fa-eye", "fa-eye-slash");
         } else {
             field.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
+            icon.classList.replace("fa-eye-slash", "fa-eye");
         }
     }
+
+    document.getElementById('accept_terms').addEventListener('change', function() {
+        document.getElementById('register_button').disabled = !this.checked;
+    });
 </script>
-    
+
 {% endblock %}

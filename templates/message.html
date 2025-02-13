@@ -6,8 +6,27 @@
 {% block content %}
 <h2 class="page-title">Messages</h2>
 
+<!-- Notification Section -->
+<div class="notification-section">
+    <h3 class="notification-heading">Notifications</h3>  <!-- New notification heading -->
+    {% if notifications %}
+        <div class="notifications">
+            <ul>
+                {% for notification in notifications %}
+                <li class="notification-item">
+                    <strong>{{ notification.title }}</strong>
+                    <p>{{ notification.message }}</p>
+                    <span class="notification-time">{{ notification.timestamp|date:"h:i A" }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <p>No notifications available.</p>
+    {% endif %}
+</div>
+
 <div class="message-layout">
-    <!-- Display list of customers for staff -->
     {% if request.user.is_staff %}
     <div class="customer-list">
         <h4>Customers who messaged you:</h4>
@@ -21,7 +40,7 @@
                         {% else %}
                             <i class="fa fa-user-circle"></i>
                         {% endif %}
-                        <span class="customer-name">{{ customer.username }}</span>
+                        <span class="customer-name">{{ customer.get_full_name }} </span>
                         {% if customer.unread_count > 0 %}
                             <span class="unread-badge">{{ customer.unread_count }}</span>
                         {% endif %}
@@ -33,18 +52,29 @@
     </div>
     {% endif %}
 
+    
+
     <!-- Chat section -->
     <div class="chat-container">
         <div class="chat-header">
+            {% if request.user.is_staff %}
+                <h3 class="customer-service-heading"><strong>Customer Service Center</strong></h3>
+            {% endif %}
+            
             <h3>
                 {% if selected_customer %}
-                    Chat with {{ selected_customer.username }}
+                    {{ selected_customer.get_full_name }}
                 {% else %}
-                    Chat with customer service
+                    {% if request.user.is_staff %}
+                        Select a customer to chat with
+                    {% else %}
+                        Chat with customer service
+                    {% endif %}
                 {% endif %}
             </h3>
         </div>
-
+        
+        
         <!-- Chat messages -->
         <div class="chat-messages" id="chatBox">
             {% for message in all_messages %}
@@ -115,6 +145,7 @@
 </script>
 
 <style>
+    /* General styling */
     .page-title {
         font-size: 2rem;
         font-weight: bold;
@@ -123,6 +154,65 @@
         text-align: center;
     }
 
+    /* Notification section styles */
+    .notification-section {
+        margin-bottom: 20px;
+    }
+
+    .notifications {
+        background-color: #FFFCF9;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .customer-service-heading {
+    color: #ff5733; /* Bright red-orange color */
+    font-size: 24px; /* Larger text */
+    font-weight: bold;
+    text-transform: uppercase; /* Uppercase letters */
+    background-color: #f0f0f0; /* Light gray background */
+    padding: 10px 15px; /* Padding around the text */
+    border-radius: 8px; /* Rounded corners */
+    text-align: center; /* Center the text */
+    display: inline-block; /* Prevent full-width background */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow effect */
+}
+
+
+    .notifications ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .notification-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 10px;
+        background-color: #FFEB3B;  /* New background color for notification */
+        border-left: 5px solid #FF6F61; /* Border color for extra emphasis */
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item strong {
+        font-size: 1.1rem;
+        color: #D32F2F; /* Darker red for title to make it stand out */
+    }
+
+    .notification-item p {
+        margin: 5px 0;
+        font-size: 0.9rem;
+        color: #555;
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: #888;
+    }
+
+    /* Message Layout */
     .message-layout {
         display: flex;
         flex-wrap: wrap;
@@ -133,12 +223,13 @@
 
     .customer-list {
         width: 100%;
-        max-width: 300px;
-        background: #2C3E50;
+        max-width: 420px;
+        background: #34495E;
         color: #fff;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
     }
 
     .customer-scroll {
@@ -168,13 +259,14 @@
     }
 
     .customer-list a:hover {
-        background-color: #34495E;
+        background-color: #2C3E50;
     }
 
     .customer-name {
         font-weight: bold;
         color: #FFF;
         margin-left: 10px;
+        flex-grow: 1;
     }
 
     .unread-badge {
@@ -262,6 +354,7 @@
         display: flex;
         gap: 12px;
         align-items: center;
+        flex-wrap: wrap;
     }
 
     .chat-input select, .chat-input textarea {
@@ -270,7 +363,7 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         resize: none;
-        min-width: 100px;
+        min-width: 120px;
     }
 
     .send-button, .attach-icon {
@@ -306,24 +399,17 @@
         object-fit: cover;
     }
 
-    @media (max-width: 768px) {
-        .message-layout {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .customer-list {
-            max-width: 100%;
-            text-align: center;
-        }
-
-        .chat-container {
-            max-width: 100%;
-        }
-
-        .input-group {
-            flex-direction: column;
-        }
+    .customer-list a {
+        justify-content: center; /* Center align items */
+        gap: 10px; /* Reduce space between image and text */
     }
+
+    .customer-img {
+        width: 35px; /* Adjust size if needed */
+        height: 35px;
+    }
+
+
+    
 </style>
 {% endblock %}

@@ -103,14 +103,17 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender} to {self.recipient}"
 
+
+
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)  # Allow anonymous users
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Comment by {self.user} on {self.product}"    
+        return f"Comment by {self.user.username if self.user else 'UnknownUser'} on {self.product}"
+
     
 
 

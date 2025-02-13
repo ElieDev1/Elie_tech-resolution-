@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load humanize %}
 {% block content %}
 <div class="container">
@@ -13,7 +14,6 @@
                     <img src="{{ product.main_image }}" class="img-fluid main-product-img" alt="Main Image">
                 </div>
             </div>
-
             <!-- Comments Section -->
             <div class="card shadow-sm">
                 <div class="card-header">
@@ -24,13 +24,27 @@
                         {% for comment in product.comment_set.all %}
                         <div class="comment mb-3 d-flex align-items-start">
                             <!-- Profile Picture -->
-                            {% with comment.user.customer.profile_picture.url as profile_url %}
-                            <img src="{{ profile_url }}" alt="Profile Picture" class="rounded-circle me-2" width="40" height="40">
-                            {% endwith %}
-                            
+                            {% if comment.user and comment.user.customer.profile_picture %}
+                                {% with comment.user.customer.profile_picture.url as profile_url %}
+                                    <img src="{{ profile_url }}" alt="Profile Picture" class="rounded-circle me-2" width="40" height="40">
+                                {% endwith %}
+                            {% else %}
+                                <!-- Default profile icon -->
+                                <div class="default-profile-icon rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                    style="width: 40px; height: 40px; background-color: #ccc; color: white; font-size: 20px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            {% endif %}
+            
                             <!-- Comment Content -->
                             <div>
-                                <strong>{{ comment.user.username }}</strong>
+                                <strong>
+                                    {% if comment.user %}
+                                        {{ comment.user.username }}
+                                    {% else %}
+                                        Unknown User
+                                    {% endif %}
+                                </strong>
                                 <p>{{ comment.content }}</p>
                                 <small class="text-muted">{{ comment.timestamp|date:"F j, Y, g:i a" }}</small>
                             </div>
@@ -40,6 +54,7 @@
                         {% endfor %}
                     </div>
                 </div>
+            
                 <div class="card-footer">
                     <!-- Add Comment Form -->
                     <form method="post">
@@ -51,6 +66,7 @@
                     </form>
                 </div>
             </div>
+            
         </div>
 
         <!-- Right Column: Product Details & More Images -->
@@ -103,16 +119,16 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="text-center mt-4">
                 <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#productGalleryModal">View Product Gallery</button>
             </div>
-            
-               
-                    
-                
-            
-            
+
+
+
+
+
+
         </div>
     </div>
 </div>
@@ -141,6 +157,144 @@
         </div>
     </div>
 </div>
+<!-- Related Products Section -->
+<div class="related-products-section">
+    <h4 class="related-products-header">Related Products</h4>
+    <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-7 g-3 align-items-stretch">
+        {% for related in related_products %}
+        <div class="col">
+            <div class="card product-card h-100 d-flex flex-column">
+                {% if related.main_image %}
+                <img src="{{ related.main_image }}" class="card-img-top product-img" alt="{{ related.name }}">
+                {% else %}
+                <img src="/static/default_image.jpg" class="card-img-top product-img" alt="No Image Available">
+                {% endif %}
+                <div class="card-body text-center p-2 flex-grow-1">
+                    <h6 class="card-title mb-1">{{ related.name|truncatechars:20 }}</h6>
+                    <p class="card-text price mb-1">RWF {{ related.price |intcomma }}</p>
+                    <h6 class="card-text mb-1 expected-price">RWF {{ related.expected_price|intcomma }}</h6>
+
+                    <!-- Hidden Content -->
+                    <div class="card-hidden-content">
+                        <small class="text-muted">Stock: {{ related.stock }}</small>
+                        <div class="like-section mt-1">
+                            <button class="btn like-btn" id="like-btn-{{ related.id }}" onclick="toggleLike('{{ related.id }}', true)">
+                                <i class="fa-regular fa-thumbs-up"></i>
+                            </button>
+                            <button class="btn unlike-btn" id="unlike-btn-{{ related.id }}" onclick="toggleLike('{{ related.id }}', false)">
+                                <i class="fa-solid fa-thumbs-down"></i>
+                            </button>
+                            <span id="like-count-{{ related.id }}" class="like-count">{{ related.likes.count|intcomma }} likes</span>
+                        </div>
+                        <div class="button-group mt-2 d-flex justify-content-between">
+                            <a href="{% url 'product_detail' related.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
+                                <i class="fa fa-eye"></i> View
+                            </a>
+                            <a href="{% url 'add_to_cart' related.id %}" class="btn btn-success btn-sm flex-grow-1">
+                                <i class="fa fa-cart-plus"></i>+
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<style>
+    /* Styling for the Related Products Header */
+.related-products-header {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Ensure all images are the same size */
+.product-image {
+    height: 150px;
+    width: 150px;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Force 7 products per row on large screens (computers) */
+.row-cols-xl-7 .col {
+    flex: 0 0 14.285%; /* 100% / 7 = 14.285% width */
+    max-width: 14.285%;
+}
+
+/* Reduce the card height */
+.product-card {
+    transition: transform 0.3s ease-in-out;
+    height: 350px; /* Reduced height */
+}
+
+.product-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.card-title {
+    font-size: 0.9rem;
+}
+
+.price {
+    font-size: 0.7rem; /* Reduced font size */
+    color: #28a745;
+}
+
+.expected-price {
+    font-size: 0.7rem; /* Reduced font size */
+    color: #999;
+    text-decoration: line-through; /* Line through the expected price */
+}
+
+.card-hidden-content {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 0.5rem;
+}
+
+.product-card:hover .card-hidden-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.like-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.like-btn, .unlike-btn {
+    margin: 0 5px;
+}
+
+/* For smaller screens, adjust the product list to fit */
+@media (max-width: 768px) {
+    .row-cols-xl-7 .col {
+        flex: 0 0 50%; /* 2 items per row on smaller screens */
+        max-width: 50%;
+    }
+}
+
+</style>
 
 <!-- Include Bootstrap and FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -300,8 +454,6 @@
     // Set interval for automatic image transition (every 3 seconds)
     setInterval(transitionImages, 5000);
 </script>
-
-
 <script>
     function toggleLike(productId, isLike) {
         const likeCountSpan = document.getElementById('like-count-' + productId);
@@ -323,5 +475,6 @@
         .catch(error => console.error("Error:", error));
     }
 </script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 {% endblock %}
