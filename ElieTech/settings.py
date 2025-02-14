@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.request',  # Ensure this is present
                 'store.context_processors.unread_message_count',  #
+                'store.context_processors.team_member',
             ],
         },
     },

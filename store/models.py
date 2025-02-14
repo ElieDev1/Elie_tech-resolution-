@@ -135,7 +135,7 @@ class TeamMember(models.Model):
         
 
     ]
-
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='DEV')
     image = models.ImageField(upload_to='team_images/')

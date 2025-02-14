@@ -158,15 +158,17 @@
                                 <i class="fas fa-caret-down ms-2"></i>
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                                {% if user.is_staff %}
-                               <!-- The "Administration" link is now part of the collapsible menu (visible on all screen sizes) -->
-                                    <li class="nav-item">
-                                        <li><a class="nav-link" href="{% url 'team_dashboard' %}">  <i class="fa fa-cogs"></i> Over view
-                                  
+                                {% if user.is_authenticated and team_member %}
+                                <!-- The "Administration" link is now part of the collapsible menu (visible on all screen sizes) -->
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'team_dashboard' %}">
+                                        <i class="fa fa-cogs"></i> Overview
                                     </a>
                                 </li>
-                               {% endif %}
-                                
+                            {% endif %}
+                            
+                            
+                              
 
                         
                                 <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fa fa-sign-out"></i> Logout</a></li>

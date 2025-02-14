@@ -980,6 +980,8 @@ def admin_users(request):
     users = User.objects.select_related('customer').all()
     return render(request, 'admin/users.html', {'users': users})
 
+
+
 @staff_member_required
 @csrf_exempt
 def admin_edit_user(request, user_id):
@@ -1087,6 +1089,8 @@ def admin_product_detail(request, product_id):
 
 
 
+
+@staff_member_required
 @csrf_exempt
 def admin_view_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -1094,6 +1098,7 @@ def admin_view_user(request, user_id):
     messages = Message.objects.filter(sender=user)
     comments = Comment.objects.filter(user=user)
     liked_products = user.liked_products.all()
+
     return render(request, 'admin/view_user.html', {
         'user': user,
         'orders': orders,
@@ -1101,6 +1106,8 @@ def admin_view_user(request, user_id):
         'comments': comments,
         'liked_products': liked_products
     })
+
+
 @csrf_exempt
 def admin_search(request):
     query = request.GET.get('query', '')
@@ -1989,3 +1996,8 @@ def team_dashboard(request):
         'greeting': greeting,
     }
     return render(request, 'team_dashboard.html', context)
+
+
+
+
+
