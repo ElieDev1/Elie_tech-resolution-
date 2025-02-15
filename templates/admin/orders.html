@@ -1,8 +1,9 @@
 {% extends 'admin/base.html' %}
 {% load humanize %}
 {% block content %}
-    <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
+    <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300 max-w-full mx-auto sm:max-w-2xl md:max-w-3xl lg:max-w-4xl">
         <h2 class="text-3xl font-bold mb-6 text-gray-800">Order Management</h2>
+
         <!-- Filter Section -->
         <div class="flex flex-wrap gap-4 mb-6">
             <!-- Filter by Payment Status -->
@@ -17,7 +18,7 @@
                     Filter
                 </button>
             </form>
-        
+
             <!-- Filter by Delivery Status -->
             <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
                 <label for="delivery_status" class="font-semibold text-gray-700">Delivery Status:</label>
@@ -26,13 +27,12 @@
                     <option value="Pending" {% if request.GET.delivery_status == "Pending" %}selected{% endif %}>Pending</option>
                     <option value="Shipped" {% if request.GET.delivery_status == "Shipped" %}selected{% endif %}>Shipped</option>
                     <option value="Delivered" {% if request.GET.delivery_status == "Delivered" %}selected{% endif %}>Delivered</option>
-
                 </select>
                 <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full md:w-auto">
                     Filter
                 </button>
             </form>
-        
+
             <!-- Filter by Date (Today) -->
             <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
                 <input type="hidden" name="status" value="{{ request.GET.status }}">
@@ -41,41 +41,40 @@
                     Today's Orders
                 </button>
             </form>
-        
+
             <!-- Filter by Date Range -->
             <form method="get" class="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
                 <label for="start_date" class="font-semibold text-gray-700">Start Date:</label>
                 <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}" class="p-2 border border-gray-300 rounded">
-        
+
                 <label for="end_date" class="font-semibold text-gray-700">End Date:</label>
                 <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}" class="p-2 border border-gray-300 rounded">
-        
+
                 <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded-lg">
                     Apply Date Range
                 </button>
             </form>
         </div>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Order List -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {% for order in orders %}
-            <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-400">
+            <div class="bg-gray-100 p-6 rounded-xl shadow-lg border-2 border-gray-400 w-full">
                 <div class="flex justify-between items-center mb-4">
                     <div class="font-semibold text-lg text-gray-800">
                         🛒 Order ID: 000{{ order.id }}
                     </div>
-                    
                     <div class="text-sm text-gray-600">
                         👤<span class="font-semibold">{{ order.customer.user.username }}</span>
                     </div>
                 </div>
-            
+
                 <div class="space-y-3">
                     <div>
                         <strong class="text-gray-700">📦 Products:</strong>
                         <ul class="list-disc pl-5 text-gray-800">
                             {% for item in order.order_items.all %}
                                 <li class="flex items-center space-x-3">
-                                    <!-- Product Image -->
                                     {% if item.product.product_images.all %}
                                         <img src="{{ item.product.product_images.first.image.url }}" 
                                              alt="{{ item.product.name }}" 
@@ -93,7 +92,7 @@
                             {% endfor %}
                         </ul>
                     </div>
-            
+
                     <div>
                         <strong class="text-gray-700">💳 Payment Status:</strong>
                         {% if order.payment_status == 'Confirmed' %}
@@ -107,10 +106,10 @@
                         {% endif %}
                         <strong>{{ order.total_price |intcomma }} RWF</strong>
                     </div>
-            
+
                     <div class="bg-white shadow-md rounded-lg p-4 border border-gray-300">
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">💰 Payment Proof:</h3>
-            
+
                         <div class="flex flex-wrap gap-3">
                             {% if order.payment_message %}
                                 <button 
@@ -120,7 +119,7 @@
                                     📩 View Payment Message
                                 </button>
                             {% endif %}
-            
+
                             {% if order.payment_image %}
                                 <button 
                                     class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition duration-300 ease-in-out w-full md:w-auto"
@@ -129,7 +128,7 @@
                                     🖼️ View Payment Image
                                 </button>
                             {% endif %}
-            
+
                             <a href="{% url 'admin_order_detail' order.id %}" 
                                class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition duration-300 ease-in-out w-full md:w-auto text-center no-underline">
                                 🔍 View Details
@@ -146,10 +145,10 @@
                             </div>
                             {% endif %}
                         </div>
-            
+
                         {% if not order.payment_message and not order.payment_image %}
                             <p class="text-gray-600 italic mt-2">⚠️ No payment proof provided.</p>
-            
+
                             <div class="flex flex-wrap gap-3">
                                
                                 <form action="{% url 'delete_order' order.id %}" method="post" class="w-full md:w-auto">
@@ -183,63 +182,53 @@
                     </div>
                 {% endif %}
                 {% endif %}
-            
-            
             </div>
           
-        
-                   
 
-                <!-- Payment Message Modal -->
-                {% if order.payment_message %}
-                <div class="modal fade" id="paymentMessageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentMessageModalLabel-{{ order.id }}" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title text-gray-800" id="paymentMessageModalLabel-{{ order.id }}">
-                                    💬 Payment Message for Order #{{ order.id }}
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p class="text-gray-700">{{ order.payment_message }}</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
+            <!-- Payment Message Modal -->
+            {% if order.payment_message %}
+            <div class="modal fade" id="paymentMessageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentMessageModalLabel-{{ order.id }}" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-gray-800" id="paymentMessageModalLabel-{{ order.id }}">
+                                💬 Payment Message for Order #{{ order.id }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-gray-700">{{ order.payment_message }}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
-                {% endif %}
+            </div>
+            {% endif %}
 
-                <!-- Payment Image Modal -->
-                {% if order.payment_image %}
-                <div class="modal fade" id="paymentImageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentImageModalLabel-{{ order.id }}" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title text-gray-800" id="paymentImageModalLabel-{{ order.id }}">
-                                    🖼️ Payment Image for Order #{{ order.id }}
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-full rounded-lg shadow-lg">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
+            <!-- Payment Image Modal -->
+            {% if order.payment_image %}
+            <div class="modal fade" id="paymentImageModal-{{ order.id }}" tabindex="-1" aria-labelledby="paymentImageModalLabel-{{ order.id }}" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-gray-800" id="paymentImageModalLabel-{{ order.id }}">
+                                🖼️ Payment Image for Order #{{ order.id }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-full rounded-lg shadow-lg">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
-                {% endif %}
+            </div>
+            {% endif %}
 
-            {% endfor %}
-        </div>
+        {% endfor %}
     </div>
-
-    <!-- Include Bootstrap CSS and JavaScript (for Bootstrap 5) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
 {% endblock %}

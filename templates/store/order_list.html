@@ -5,62 +5,52 @@
     <h2 class="text-center mb-4">Your Orders</h2>
     
     {% if orders %}
-        <div class="list-group">
+        <div class="row">
             {% for order in orders %}
-                <div class="list-group-item mb-3">
-                    <h5>Order for {{ order.customer.user.username }} - Placed on {{ order.ordered_at|date:"D, d M Y H:i" }}</h5>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card shadow-sm border">
+                        <div class="card-body">
+                            <h5 class="card-title">Order 000{{ order.id }}</h5>
+                            <p class="text-muted">Placed on {{ order.ordered_at|date:"D, d M Y H:i" }}</p>
+                            
+                            <!-- Payment and Delivery Status -->
+                            <p><strong>Payment:</strong> 
+                                <span class="badge {% if order.payment_status == 'Confirmed' %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ order.payment_status_display }}
+                                </span>
+                            </p>
+                            <p><strong>Delivery:</strong> 
+                                <span class="badge {% if order.delivery_status == 'Delivered' %}bg-success{% elif order.delivery_status == 'Shipped' %}bg-info{% else %}bg-warning{% endif %}">
+                                    {{ order.delivery_status_display }}
+                                </span>
+                            </p>
 
-                    <!-- Order status and total -->
-                    <div class="mb-2">
-                        <strong>Payment Status: </strong>
-                        <span class="badge 
-                            {% if order.payment_status == 'Confirmed' %}bg-success
-                            {% else %}bg-warning{% endif %}">
-                            {{ order.payment_status_display }}
-                        </span>
-                    </div>
-                    <div class="mb-2">
-                        <strong>Delivery Status: </strong>
-                        <span class="badge
-                            {% if order.delivery_status == 'Delivered' %}bg-success
-                            {% elif order.delivery_status == 'Shipped' %}bg-info
-                            {% else %}bg-warning{% endif %}">
-                            {{ order.delivery_status_display }}
-                        </span>
-                    </div>
-
-                    <h6>Order Items:</h6>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Unit Price (FRW)</th>
-                                <th>Subtotal (FRW)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in order.order_items.all %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ item.product.name }}</strong><br>
+                            <h6>Items:</h6>
+                            <ul class="list-group list-group-flush">
+                                {% for item in order.order_items.all %}
+                                    <li class="list-group-item d-flex align-items-center">
                                         {% if item.product.product_images.all %}
-                                            <img src="{{ item.product.product_images.first.image.url }}" alt="{{ item.product.name }}" style="width: 50px; height: 50px;">
+                                            <img src="{{ item.product.product_images.first.image.url }}" alt="{{ item.product.name }}" class="me-2" style="width: 50px; height: 50px;">
                                         {% else %}
-                                            <span>No image</span>
+                                            <span class="me-2">No image</span>
                                         {% endif %}
-                                    </td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td>{{ item.product.price |intcomma }}</td>
-                                    <td>{{ item.subtotal|intcomma  }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                        <div>
+                                            <strong>{{ item.product.name }}</strong> <br>
+                                            <span class="text-muted">Qty: {{ item.quantity }} | Price: {{ item.product.price |intcomma }} FRW</span>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
 
-                    <div class="d-flex justify-content-between">
-                        <strong>Total: </strong><span>{{ order.total_price |intcomma }} FRW</span>
-                        <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-info btn-sm">View Details</a>
+                            <div class="d-flex justify-content-between mt-3">
+                                <strong>Total: </strong>
+                                <span class="fw-bold">{{ order.total_price |intcomma }} FRW</span>
+                            </div>
+
+                            <div class="text-center mt-3">
+                                <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-info btn-sm">View Details</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             {% endfor %}

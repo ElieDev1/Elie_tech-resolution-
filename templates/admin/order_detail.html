@@ -47,13 +47,21 @@
             {% endif %}
             
 
-            <div class="mt-6">
-                <a href="{% url 'admin_orders' %}" class="btn btn-secondary">⬅️ Back to Orders</a>
-                <form action="{% url 'delete_order' order.id %}" method="post" style="display:inline;">
+            <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                <!-- Back Button -->
+                <a href="{% url 'admin_orders' %}" class="btn btn-secondary bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mb-4 sm:mb-0">
+                    ⬅️ Back to Orders
+                </a>
+                
+                <!-- Delete Form -->
+                <form action="{% url 'delete_order' order.id %}" method="post" class="w-full sm:w-auto">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">🗑️ Delete Order</button>
+                    <button type="submit" class="btn btn-danger bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 w-full sm:w-auto" onclick="return confirm('Are you sure?')">
+                        🗑️ Delete Order
+                    </button>
                 </form>
             </div>
+            
         </div>
 
         <!-- Customer Information (Right Column) -->

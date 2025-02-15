@@ -440,8 +440,10 @@ def increase_quantity(request, product_id):
 
 
 
+from django.views.decorators.csrf import csrf_protect
+
 @require_POST
-@csrf_exempt
+@csrf_protect
 def decrease_quantity(request, product_id):
     cart = request.session.get('cart', {})
     product_key = str(product_id)
@@ -450,17 +452,20 @@ def decrease_quantity(request, product_id):
         if cart[product_key]['quantity'] > 1:
             cart[product_key]['quantity'] -= 1
         else:
-            del cart[product_key]  # Remove item if quantity becomes zero
+            del cart[product_key]  # Remove item if quantity is 1 and user clicks '-'
 
         request.session['cart'] = cart  # Save updated cart
+
+        # Get product price only if the product is still in the cart
+        product_price = Product.objects.get(id=product_id).price if product_key in cart else 0
 
         return JsonResponse({
             'status': 'success',
             'product_id': product_id,
             'product_quantity': cart.get(product_key, {}).get('quantity', 0),  # Get updated quantity
-            'product_price': Product.objects.get(id=product_id).price if product_key in cart else 0,
+            'product_price': product_price,
             'cart_total': sum(item['quantity'] for item in cart.values()),
-            'cart_total_price': sum(item['quantity'] * item['price'] for item in cart.values())
+            'cart_total_price': sum(item['quantity'] * item['price'] for item in cart.values()),
         })
     
     return JsonResponse({'status': 'error', 'message': 'Item not in cart'}, status=400)

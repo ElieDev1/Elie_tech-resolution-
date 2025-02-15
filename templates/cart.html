@@ -118,7 +118,7 @@ async function removeFromCart(productId) {
 <!-- AJAX JavaScript -->
 
 <script>
-    function updateQuantity(productId, action) {
+function updateQuantity(productId, action) {
     const url = action === 'increase' ? `/cart/increase/${productId}/` : `/cart/decrease/${productId}/`;
 
     fetch(url, {
@@ -134,16 +134,24 @@ async function removeFromCart(productId) {
             const quantityElement = document.getElementById(`quantity-${productId}`);
             const subtotalElement = document.getElementById(`subtotal-${productId}`);
             const cartItemElement = document.getElementById(`cart-item-${productId}`);
+            const decreaseButton = document.querySelector(`#cart-item-${productId} button[onclick*='decrease']`);
             const totalPriceElement = document.getElementById("total-price");
 
             if (data.product_quantity > 0) {
-                quantityElement.textContent = data.product_quantity;
-                subtotalElement.textContent = `FRW ${data.product_quantity * data.product_price}`;
+                quantityElement.textContent = data.product_quantity; // Update quantity
+                subtotalElement.textContent = `FRW ${data.product_quantity * data.product_price}`; // Update subtotal
+                
+                // Enable decrease button if quantity > 1, disable if 1
+                if (data.product_quantity > 1) {
+                    decreaseButton.removeAttribute("disabled");
+                } else {
+                    decreaseButton.setAttribute("disabled", "true");
+                }
             } else {
-                cartItemElement.remove(); // Remove item from UI if quantity reaches 0
+                cartItemElement.remove(); // Remove item from UI if quantity is 0
             }
 
-            // Update total price
+            // ✅ Fix: Ensure total price updates instantly
             let totalPrice = 0;
             document.querySelectorAll('[id^="subtotal-"]').forEach(function(subtotal) {
                 totalPrice += parseFloat(subtotal.textContent.replace('FRW ', '').replace(',', ''));
