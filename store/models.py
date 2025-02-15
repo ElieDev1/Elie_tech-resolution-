@@ -72,6 +72,7 @@ class Order(models.Model):
     delivery_status = models.CharField(max_length=100, choices=[('Pending', 'Pending'), ('Shipped', 'Shipped'), ('Delivered', 'Delivered')], default='Pending')
 
     # Payment-related fields
+    payment_name = models.CharField(max_length=100, blank=True, null=True)
     payment_message = models.TextField(blank=True, null=True)
     payment_image = models.ImageField(upload_to='payment_images/', blank=True, null=True)
     payment_status = models.CharField(

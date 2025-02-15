@@ -1266,6 +1266,7 @@ def payment_method(request, order_id):
             # Save payment details in the order
             order.payment_message = form.cleaned_data['payment_message']
             order.payment_image = form.cleaned_data.get('payment_image')
+            order.payment_name = form.cleaned_data['payment_name']  # <-- Add this line
 
             # Set payment status to 'Pending' when details are submitted
             order.payment_status = 'Pending'
@@ -1281,6 +1282,7 @@ def payment_method(request, order_id):
         form = PaymentForm()
 
     return render(request, 'store/payment_method.html', {'order': order, 'form': form})
+
 
 
 

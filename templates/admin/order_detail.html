@@ -2,7 +2,10 @@
 {% load humanize %}
 {% block content %}
 <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-gray-300">
-    <h2 class="text-3xl font-bold mb-6 text-gray-800">Order 000{{ order.id }} Details   <strong style=" color:blue" >{{ order.total_price|intcomma  }} RWF</strong></h2>
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">
+        Order 000{{ order.id }} Details 
+        <strong style="color:blue">{{ order.total_price|intcomma }} RWF</strong>
+    </h2>
     <hr>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -34,18 +37,28 @@
             </ul>
 
             <h3 class="text-xl font-bold mt-4">💰 Payment Proof</h3>
+            
+            <!-- Payment Name -->
+            {% if order.payment_name %}
+                <p><strong>🔖 Name Used in Payment:</strong> {{ order.payment_name }}</p>
+            {% else %}
+                <p class="text-gray-600 italic">⚠️ No payment name provided.</p>
+            {% endif %}
+            <!-- Payment Message -->
             {% if order.payment_message %}
+                <h3 class="text-lg font-bold text-blue-600">{{ order.payment_name }}</h3> <!-- Payment Name as Heading -->
                 <p>📩 {{ order.payment_message }}</p>
             {% else %}
                 <p class="text-gray-600 italic">⚠️ No payment message provided.</p>
             {% endif %}
             
+            
+            <!-- Payment Image -->
             {% if order.payment_image %}
                 <img src="{{ order.payment_image.url }}" alt="Payment Image" class="w-64 rounded-lg shadow-md mt-3">
             {% else %}
                 <p class="text-gray-600 italic">⚠️ No payment image provided.</p>
             {% endif %}
-            
 
             <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:gap-4">
                 <!-- Back Button -->
@@ -61,7 +74,6 @@
                     </button>
                 </form>
             </div>
-            
         </div>
 
         <!-- Customer Information (Right Column) -->

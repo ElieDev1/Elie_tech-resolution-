@@ -126,13 +126,20 @@ class EditProfileForm(UserChangeForm):
 
 
 class PaymentForm(forms.ModelForm):
-    class Meta:
-        model = Order
-        fields = ['payment_message', 'payment_image']
-
-    payment_message = forms.CharField(widget=forms.Textarea(attrs={'placeholder': '*165*S*12400 RWF transferred to ELIE......'}), required=False)
+    payment_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={'placeholder': 'Enter the name used in payment'}),
+        required=True
+    )
+    payment_message = forms.CharField(
+        widget=forms.Textarea(attrs={'placeholder': '*165*S*12400 RWF transferred to ELIE......'}),
+        required=False
+    )
     payment_image = forms.ImageField(required=False)
 
+    class Meta:
+        model = Order
+        fields = ['payment_name', 'payment_message', 'payment_image']
 
 
 class AdvertisementForm(forms.ModelForm):
