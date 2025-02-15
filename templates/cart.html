@@ -1,78 +1,167 @@
-{% extends 'base.html' %}
-{% load cart_filters %}
+{% extends "base.html" %}
 {% load humanize %}
+
 {% block content %}
-<div class="container">
-    <h2 class="my-4 text-center">Shopping Cart</h2>
-    
-    {% if cart %}
+<div class="container mt-4">
     <div class="row">
         {% for item in products %}
-        <!-- Changed col-md-6 to col-md-4 for 3 columns -->
-        <div class="col-md-4 mb-3">
+        <div class="col-md-4 mb-3" id="cart-item-{{ item.product.id }}">
             <div class="card shadow-sm h-100">
                 <div class="row g-0">
-                    <!-- Product Image -->
                     <div class="col-3">
-                        <img src="{{ item.product.main_image }}" class="img-fluid rounded-start cart-img" alt="{{ item.product.name }}">
+                        <img src="{{ item.product.main_image }}" 
+                             class="img-fluid rounded-start cart-img" 
+                             alt="{{ item.product.name }}">
                     </div>
-
-                    <!-- Product Details -->
                     <div class="col-9">
                         <div class="card-body p-2">
                             <h6 class="card-title mb-1">{{ item.product.name|truncatechars:25 }}</h6>
-                            <p class="card-text mb-1 small">Price: <strong>FRW {{ item.product.price |intcomma }}</strong></p>
-
-                            <!-- Quantity Adjustment -->
+                            <p class="card-text mb-1 small">
+                                Price: <strong>FRW <span id="price-{{ item.product.id }}">{{ item.product.price|intcomma }}</span></strong>
+                            </p>
+                            
                             <div class="d-flex align-items-center">
-                                <a href="{% url 'decrease_quantity' item.product.id %}" class="btn btn-outline-secondary btn-sm py-0">−</a>
-                                <span class="mx-2">{{ item.quantity }}</span>
-                                <a href="{% url 'increase_quantity' item.product.id %}" class="btn btn-outline-secondary btn-sm py-0">+</a>
+                                <button onclick="updateQuantity({{ item.product.id }}, 'decrease')" 
+                                        class="btn btn-outline-secondary btn-sm py-0" 
+                                        {% if item.quantity == 1 %}disabled{% endif %}>−</button>
+                                <span class="mx-2" id="quantity-{{ item.product.id }}">
+                                    {{ item.quantity }}
+                                </span>
+                                <button onclick="updateQuantity({{ item.product.id }}, 'increase')" 
+                                        class="btn btn-outline-secondary btn-sm py-0">+</button>
                             </div>
-
-                            <!-- Subtotal -->
-                            <p class="mt-1 mb-0 small">Subtotal: <strong>FRW {{ item.subtotal|intcomma  }}</strong></p>
-
-                            <!-- Remove Button -->
+                            
+                            <p class="mt-1 mb-0 small">
+                                Subtotal: <strong id="subtotal-{{ item.product.id }}">
+                                    FRW {{ item.subtotal|intcomma }}
+                                </strong>
+                            </p>
+                            
                             <div class="mt-1">
-                                <a href="{% url 'remove_from_cart' item.product.id %}" class="btn btn-danger btn-sm py-0">Remove</a>
+                                <button onclick="removeFromCart({{ item.product.id }})" 
+                                        class="btn btn-danger btn-sm py-0">Remove</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
         </div>
+        
+        {% empty %}
+        <p class="text-center">Your cart is empty.</p>
         {% endfor %}
     </div>
-
-    <!-- Total & Checkout -->
     <div class="text-center mt-4">
-        <h4>Total Price: <strong>FRW {{ total_price |intcomma }}</strong></h4>
+        <h4>Total Price: <strong id="total-price">FRW {{ total_price |intcomma }}</strong></h4>
         <a href="{% url 'checkout' %}" class="btn btn-primary btn-lg mt-2">Checkout</a>
-        <a href="{% url 'clear_cart' %}" class="btn btn-warning btn-lg mt-2">Clear Cart</a>
+        <button id="clear-cart" class="btn btn-warning btn-lg mt-2">Clear Cart</button>
     </div>
-
-    {% else %}
-    <p class="text-center">Your cart is empty.</p>
-    {% endif %}
 </div>
+<script>
+document.getElementById("clear-cart").addEventListener("click", function() {
+    fetch("{% url 'clear_cart' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            alert("Cart cleared successfully!");
+            location.reload(); // Reload page to update cart display
+        }
+    })
+    .catch(error => console.error("Error:", error));
+});
 
-<!-- Updated Styles -->
-<style>
-    .cart-img {
-        width: 100%;
-        height: 100px;  /* Reduced height */
-        object-fit: cover;
+
+async function removeFromCart(productId) {
+    try {
+        const response = await fetch(`/cart/remove/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{csrf_token}}',
+            },
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Update the cart count badge
+            const cartCountElement = document.getElementById('cartCount');
+            const cartCountMobileElement = document.querySelector('#cartCountMobile');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.cart_total;
+                cartCountMobileElement.textContent = data.cart_total;
+            }
+
+            // Remove the product from the UI
+            const cartItemElement = document.getElementById(`cart-item-${data.removed_product_id}`);
+            if (cartItemElement) {
+                cartItemElement.remove();
+            }
+
+            // Show success message
+            // alert(data.message); // Replace with a toast or modal for better UX
+        } else {
+            // Show error message
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Error removing from cart:', error);
+        alert('An error occurred while removing the product from the cart. Please try again.');
     }
-    .card {
-        min-width: 250px;  /* Minimum card width */
-    }
-    .card-title {
-        font-size: 1rem;
-    }
-    .card-text {
-        font-size: 0.9rem;
-    }
-</style>
+}
+</script>
+<!-- AJAX JavaScript -->
+
+<script>
+    function updateQuantity(productId, action) {
+    const url = action === 'increase' ? `/cart/increase/${productId}/` : `/cart/decrease/${productId}/`;
+
+    fetch(url, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json"
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            const quantityElement = document.getElementById(`quantity-${productId}`);
+            const subtotalElement = document.getElementById(`subtotal-${productId}`);
+            const cartItemElement = document.getElementById(`cart-item-${productId}`);
+            const totalPriceElement = document.getElementById("total-price");
+
+            if (data.product_quantity > 0) {
+                quantityElement.textContent = data.product_quantity;
+                subtotalElement.textContent = `FRW ${data.product_quantity * data.product_price}`;
+            } else {
+                cartItemElement.remove(); // Remove item from UI if quantity reaches 0
+            }
+
+            // Update total price
+            let totalPrice = 0;
+            document.querySelectorAll('[id^="subtotal-"]').forEach(function(subtotal) {
+                totalPrice += parseFloat(subtotal.textContent.replace('FRW ', '').replace(',', ''));
+            });
+            totalPriceElement.textContent = `FRW ${totalPrice.toLocaleString()}`;
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error("Error:", error));
+}
+
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}
+
+</script>
 
 {% endblock %}

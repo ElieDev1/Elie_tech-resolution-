@@ -73,8 +73,8 @@
         .mobile-bottom-nav .cart-badge,
         .mobile-bottom-nav .message-badge {
             position: absolute;
-            top: 2px;
-            right: 15px;
+            top: -5px;
+            right: 30px;
         }
 
         /* Navbar Toggle Button */
@@ -89,6 +89,18 @@
         /* Ensure nav elements are displayed correctly on small screens */
         .navbar-collapse {
             z-index: 1040;  /* Ensure the navbar menu stays below the toggle button */
+        }
+
+        
+        .fa-shopping-cart {
+            font-size: 1.25rem;
+        }
+
+        
+        .badge {
+            font-size: 0.75rem; 
+            padding: 0.25em 0.5em;
+            border-radius: 0.5rem;
         }
     </style>
 </head>
@@ -138,50 +150,89 @@
                             {% endif %}
                         </a>
                     </li>
-                    <li class="nav-item d-none d-sm-block">
-                        <a class="nav-link" href="{% url 'cart_view' %}">
-                            <i class="fa fa-shopping-cart"></i> Cart
-                            <span id="cartCount" class="badge bg-danger">{{ request.session.cart|length }}</span>
+                    <li class="nav-item d-none d-md-block">
+                        <a class="nav-link" href="{% url 'cart_view' %}" role="button">
+                            <i class="fa fa-shopping-cart position-relative">
+                                <!-- Cart Count Badge -->
+                                <span id="cartCount" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+                                    {{ request.session.cart|length }}
+                                </span>
+                            </i> Cart
                         </a>
                     </li>
+                    
+                    
                         <li><a class="nav-link" href="{% url 'profile' %}"><i class="fa fa-id-card"></i> Profile</a></li>
                         <li><a class="nav-link" href="{% url 'order_list' %}"><i class="fa fa-box"></i> My Orders</a></li>
                        
-                        <li class="nav-item dropdown">
-                            <a class="nav-link d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                     
+                        
+                    
+                        <li class="nav-item">
+                            <a href="#" class="nav-link d-flex align-items-center" id="userDropdown">
                                 {% if user.customer and user.customer.profile_picture %}
                                     <img src="{{ user.customer.profile_picture.url }}" alt="Profile" class="rounded-circle" width="30" height="30">
                                 {% else %}
                                     <img src="/media/profile_pictures/profile.png" alt="Default Profile" class="rounded-circle" width="30" height="30">
                                 {% endif %}
-                                <span class="ms-2">{{ user.username }}</span>
+                                <span class="ms-2">{{ user.get_full_name }}</span>
                                 <i class="fas fa-caret-down ms-2"></i>
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        
+                            <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu" style="display: none; position: absolute; background: white; border-radius: 5px; padding: 10px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
                                 {% if user.is_authenticated and team_member %}
-                                <!-- The "Administration" link is now part of the collapsible menu (visible on all screen sizes) -->
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'team_dashboard' %}">
-                                        <i class="fa fa-cogs"></i> Overview
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'team_dashboard' %}">
+                                            <i class="fa fa-cogs"></i> Overview
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                        <i class="fa fa-sign-out"></i> Logout
                                     </a>
                                 </li>
-                            {% endif %}
-                            
-                            
-                              
-
-                        
-                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fa fa-sign-out"></i> Logout</a></li>
-
                             </ul>
                         </li>
+                        
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function() {
+                                var dropdownToggle = document.getElementById("userDropdown");
+                                var dropdownMenu = document.getElementById("userDropdownMenu");
+                        
+                                dropdownToggle.addEventListener("click", function(event) {
+                                    event.preventDefault(); // Prevent default link action
+                                    dropdownMenu.style.display = dropdownMenu.style.display === "none" ? "block" : "none";
+                                });
+                        
+                                // Hide dropdown when clicking outside
+                                document.addEventListener("click", function(event) {
+                                    if (!dropdownToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                                        dropdownMenu.style.display = "none";
+                                    }
+                                });
+                            });
+                        </script>
+                        
                     {% else %}
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="{% url 'cart_view' %}">
                                 <i class="fa fa-shopping-cart"></i> Cart
                                 <span id="cartCount" class="badge bg-danger">{{ request.session.cart|length }}</span>
                         </a>
+                        </li> -->
+                        <li class="nav-item ">
+                            <a class="nav-link" href="{% url 'cart_view' %}"  role="button">
+                                <i class="fa fa-shopping-cart position-relative">
+                                    <!-- Cart Count Badge -->
+                                    <span id="cartCount" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+                                        {{ request.session.cart|length }}
+                                    </span>
+                                </i> Cart
+                            </a>
                         </li>
+                        
                         <li class="nav-item">
                             <a class="btn btn-outline-primary me-2" href="{% url 'login' %}"><i class="fa fa-sign-in"></i> Login</a>
                             <a class="btn btn-outline-success" href="{% url 'register' %}"><i class="fa fa-user-plus"></i> Register</a>
@@ -281,11 +332,21 @@
             <i class="fa fa-th"></i>
             Products
         </a>
-        <a href="{% url 'cart_view' %}" class="nav-item">
+        <!-- <a href="{% url 'cart_view' %}" class="nav-item">
             <i class="fa fa-shopping-cart"></i>
             Cart
             <span class="cart-badge badge bg-danger">{{ request.session.cart|length }}</span>
-        </a>
+        </a> -->
+        
+            <a class="nav-item" href="{% url 'cart_view' %}"  >
+                <i class="fa fa-shopping-cart position-relative">
+                    <!-- Cart Count Badge -->
+                    <span id="cartCountMobile" class="badge bg-danger position-absolute top-0 start-30 translate-middle">
+                        {{ request.session.cart|length }}
+                    </span>
+                </i> Cart
+            </a>
+        
         <a href="{% url 'messages' %}" class="nav-item">
             <i class="fa fa-message"></i>
             Messages

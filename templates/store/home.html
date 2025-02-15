@@ -2,6 +2,36 @@
 {% load cart_filters %}
 {% load humanize %}
 {% block content %}
+<style>
+    /* Flying Animation */
+@keyframes fly {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.fly-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.fly-text {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: green;
+    animation: fly 1.8s ease-out forwards;
+}
+</style>
+
 <div class="container">
     <!-- Hero Section -->
     <div class="hero-section text-center py-5 bg-light mb-4">
@@ -21,13 +51,25 @@
                     <div class="card-body text-center">
                         <h6 class="card-title">{{ product.name|truncatechars:15 }}</h6>
                         <p class="card-text price">FRW {{ product.price |intcomma }}</p>
-                        <div class="button-group">
+                        <!-- <div class="button-group mt-2 d-flex justify-content-between">
                             <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm">
                                 <i class="fa fa-eye"></i> View
                             </a>
-                            <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success btn-sm">
+                            <button onclick="addToCart({{ product.id }})" class="btn btn-success btn-sm">
                                 <i class="fa fa-shopping-cart"></i> Order
+                            </button>
+                            <span id="cart-notification-{{ item.product.id }}" class="cart-notification" style="display: none;">1+</span>
+                        </div> -->
+                        <div class="button-group mt-2 d-flex justify-content-between">
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
+                                <i class="fa fa-eye"></i> View
                             </a>
+                            <!-- Add to Cart Button with Flying Animation -->
+                            <button onclick="addToCart({{ product.id }}, this)" class="btn btn-success btn-sm flex-grow-1 position-relative">
+                                <i class="fa fa-cart-plus"></i>+
+                                <!-- Container for Flying Elements -->
+                                <div id="fly-container-{{ product.id }}" class="fly-container"></div>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -164,7 +206,7 @@
                         {% endif %}
                         <div class="card-body text-center p-2">
                             <h6 class="card-title mb-1">{{ item.name|truncatechars:20 }}</h6>
-                            <p class="card-text price mb-1">RWF {{ item.price|intcomma  }}</p>
+                            <p class="card-text price mb-1">RWF {{ item.price|intcomma }}</p>
                             <h6 class="card-text mb-1">RWF {{ item.expected_price|truncatechars:20 }}</h6>
         
                             <!-- Hidden Content -->
@@ -183,9 +225,12 @@
                                     <a href="{% url 'product_detail' item.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
                                         <i class="fa fa-eye"></i> View
                                     </a>
-                                    <a href="{% url 'add_to_cart' item.id %}" class="btn btn-success btn-sm flex-grow-1">
+                                    <!-- Add to Cart Button with Flying Animation -->
+                                    <button onclick="addToCart({{ item.id }}, this)" class="btn btn-success btn-sm flex-grow-1 position-relative">
                                         <i class="fa fa-cart-plus"></i>+
-                                    </a>
+                                        <!-- Container for Flying Elements -->
+                                        <div id="fly-container-{{ item.id }}" class="fly-container"></div>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -438,6 +483,52 @@
 }
 
 </style>
+
+<script>
+  async function addToCart(productId, button) {
+    try {
+        const response = await fetch(`add_to_cart/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Update the cart count badge
+            const cartCountElement = document.querySelector('#cartCount');
+            const cartCountMobileElement = document.querySelector('#cartCountMobile');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.cart_total;
+                cartCountMobileElement.textContent = data.cart_total;
+            }
+
+            // Create the flying text element
+            const flyText = document.createElement('div');
+            flyText.classList.add('fly-text');
+            flyText.textContent = `+${data.product_quantity || 1}`; // Show the quantity added
+
+            // Append the flying text to the container
+            const flyContainer = button.querySelector('.fly-container');
+            flyContainer.appendChild(flyText);
+
+            // Remove the flying text after the animation completes
+            setTimeout(() => {
+                flyText.remove();
+            }, 2500); // Match the duration of the animation
+        } else {
+            // Show error message (optional)
+            alert(data.message); // Replace with a toast or modal for better UX
+        }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('An error occurred while adding the product to the cart. Please try again.');
+    }
+}
+
+</script>
 
 <script>
     function scrollHorizontal(amount) {

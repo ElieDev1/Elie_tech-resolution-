@@ -1,6 +1,10 @@
+
 {% extends 'base.html' %}
 {% load humanize %}
+{% load static %}
 {% block content %}
+
+
 <div class="container">
     <div class="row1 mb-4">
         <!-- Search Bar -->
@@ -123,6 +127,8 @@
         font-size: 16px;
         color: #555;
     }
+
+
 </style>
 
 <!-- JavaScript for Rotating Products -->
@@ -146,6 +152,8 @@
             setInterval(showNextProduct, 5000);
         }
     });
+
+    
 </script>
 
 
@@ -201,9 +209,12 @@
                                     <a href="{% url 'product_detail' item.product.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
                                         <i class="fa fa-eye"></i> View
                                     </a>
-                                    <a href="{% url 'add_to_cart' item.product.id %}" class="btn btn-success btn-sm flex-grow-1">
+                                    <!-- Add to Cart Button with Flying Animation -->
+                                    <button onclick="addToCart({{ item.product.id }}, this)" class="btn btn-success btn-sm flex-grow-1 position-relative">
                                         <i class="fa fa-cart-plus"></i>+
-                                    </a>
+                                        <!-- Container for Flying Elements -->
+                                        <div id="fly-container-{{ item..product.id }}" class="fly-container"></div>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -442,7 +453,53 @@
 
 </style>
 
+<script src="{% static 'js/cart.js' %}"></script>
 <script>
+
+async function addToCart(productId, button) {
+    try {
+        const response = await fetch(`/add_to_cart/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Update the cart count badge
+            const cartCountElement = document.querySelector('#cartCount');
+            const cartCountMobileElement = document.querySelector('#cartCountMobile');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.cart_total;
+                cartCountMobileElement.textContent = data.cart_total;
+            }
+
+            // Create the flying text element
+            const flyText = document.createElement('div');
+            flyText.classList.add('fly-text');
+            flyText.textContent = `+${data.product_quantity || 1}`; // Show the quantity added
+
+            // Append the flying text to the container
+            const flyContainer = button.querySelector('.fly-container');
+            flyContainer.appendChild(flyText);
+
+            // Remove the flying text after the animation completes
+            setTimeout(() => {
+                flyText.remove();
+            }, 2500); // Match the duration of the animation
+        } else {
+            // Show error message (optional)
+            alert(data.message); // Replace with a toast or modal for better UX
+        }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('An error occurred while adding the product to the cart. Please try again.');
+    }
+}
+
+
     function toggleLike(productId, isLike) {
         const likeCountSpan = document.getElementById('like-count-' + productId);
 
@@ -463,4 +520,38 @@
         .catch(error => console.error("Error:", error));
     }
 </script>
+
+<style>
+
+    /* Flying Animation */
+@keyframes fly {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.fly-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.fly-text {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: green;
+    animation: fly 1.8s ease-out forwards;
+}
+
+
+</style>
+
 {% endblock %}

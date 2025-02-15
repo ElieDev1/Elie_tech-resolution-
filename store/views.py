@@ -332,108 +332,142 @@ def main_image(self):
         return self.product_images.first().image.url  # fallback to first image
     return "/static/images/default.jpg"  # Fallback in case no image is available
 
+from django.views.decorators.http import require_POST
 
+
+
+
+@require_POST
 @csrf_exempt
 def add_to_cart(request, product_id):
     cart = request.session.get('cart', {})
-
     product = get_object_or_404(Product, id=product_id)
-
+    
     if product.stock < 1:
-        messages.error(request, "This product is out of stock!")
-        return redirect('product_list')
+        return JsonResponse({
+            'status': 'error',
+            'message': 'This product is out of stock!'
+        }, status=400)
 
     product_key = str(product_id)
+    current_quantity = cart.get(product_key, {}).get('quantity', 0)
+    
+    if current_quantity >= product.stock:
+        return JsonResponse({
+            'status': 'error',
+            'message': f"Only {product.stock} units available!"
+        }, status=400)
+
     if product_key in cart:
-        if cart[product_key]['quantity'] >= product.stock:
-            messages.warning(request, f"Only {product.stock} units of {product.name} are available!")
-            return redirect('cart_view')
         cart[product_key]['quantity'] += 1
     else:
-        cart[product_key] = {'quantity': 1, 'price': float(product.price)}  # Store price
+        cart[product_key] = {
+            'quantity': 1,
+            'price': float(product.price)
+        }
 
     request.session['cart'] = cart
-    request.session.modified = True
+    return JsonResponse({
+        'status': 'success',
+        'product_id': product_id,
+        'product_quantity': cart[product_key]['quantity'],
+        'product_price': product.price,
+        'cart_total': len(cart.items()),
+        'cart_total_price': sum(item['quantity'] * item['price'] for item in cart.values())
+    })
 
-    messages.success(request, f"{product.name} added to cart. Current quantity: {cart[product_key]['quantity']}")
-    return redirect('product_list')
-
-
-
+@require_POST
 @csrf_exempt
 def remove_from_cart(request, product_id):
     cart = request.session.get('cart', {})
+    product_key = str(product_id)
+    
+    if product_key in cart:
+        del cart[product_key]
+        request.session['cart'] = cart
+        return JsonResponse({
+            'status': 'success',
+            'removed_product_id': product_id,
+            'cart_total': len(cart.items()),
+            'message': "Removed successfully",
+            'cart_total_price': sum(item['quantity'] * item['price'] for item in cart.values())
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Item not in cart'}, status=400)
 
-    product_id_str = str(product_id)  # Ensure key is a string
-    if product_id_str in cart:
-        product = Product.objects.get(id=product_id)  # Get the product from the database
-        product_name = product.name  # Extract product name
-        del cart[product_id_str]  # Remove product from cart
-        request.session['cart'] = cart  # Save updated cart
-        messages.success(request, f"{product_name} has been removed from your cart.")  # Include product name in message
 
-    return redirect('cart_view')
 
+
+@require_POST
 @csrf_exempt
 def clear_cart(request):
-    request.session['cart'] = {}  # Empty the cart
-    messages.success(request, "Your cart has been cleared.")
-    return redirect('cart_view')
+    request.session['cart'] = {}  # Clears the cart
+    request.session.modified = True  # Ensures session update is saved
 
+    return JsonResponse({
+        'status': 'success',
+        'cart_total': 0,
+        'cart_total_price': 0
+    })
+
+
+@require_POST
 @csrf_exempt
 def increase_quantity(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
+    product = get_object_or_404(Product, id=product_id)
+    product_key = str(product_id)
+    
+    if product_key not in cart:
+        return JsonResponse({'status': 'error', 'message': 'Product not in cart'}, status=400)
+    
+    if cart[product_key]['quantity'] >= product.stock:
+        return JsonResponse({
+            'status': 'error',
+            'message': f"Only {product.stock} units available!"
+        }, status=400)
 
-    product_id_str = str(product_id)
-
-    # Check if product exists in cart
-    if product_id_str in cart:
-        if isinstance(cart[product_id_str], int):
-            # Old format (e.g., cart["27"] = 2)
-            cart[product_id_str] += 1
-        elif isinstance(cart[product_id_str], dict) and 'quantity' in cart[product_id_str]:
-            # New format (e.g., cart["27"] = {"quantity": 2})
-            cart[product_id_str]['quantity'] += 1
-        else:
-            # If invalid format, reset to default structure
-            cart[product_id_str] = {"quantity": 1}
-    else:
-        # Add product with correct format
-        cart[product_id_str] = {"quantity": 1}
-
+    cart[product_key]['quantity'] += 1
     request.session['cart'] = cart
-    request.session.modified = True
-    return redirect('cart_view')
+    return JsonResponse({
+        'status': 'success',
+        'product_id': product_id,
+        'product_quantity': cart[product_key]['quantity'],
+        'product_price': product.price,
+        'cart_total': sum(item['quantity'] for item in cart.values()),
+        'cart_total_price': sum(item['quantity'] * item['price'] for item in cart.values())
+    })
 
 
+
+@require_POST
 @csrf_exempt
 def decrease_quantity(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
+    product_key = str(product_id)
 
-    # Use string keys to match the template
-    product_id_str = str(product_id)
-
-    if product_id_str in cart:
-        # Check if the cart stores quantities directly or in a dictionary format
-        if isinstance(cart[product_id_str], dict):
-            quantity = cart[product_id_str].get("quantity", 1)
+    if product_key in cart:
+        if cart[product_key]['quantity'] > 1:
+            cart[product_key]['quantity'] -= 1
         else:
-            quantity = cart[product_id_str]
+            del cart[product_key]  # Remove item if quantity becomes zero
 
-        if quantity > 1:
-            if isinstance(cart[product_id_str], dict):
-                cart[product_id_str]["quantity"] -= 1  # Decrease quantity in dictionary
-            else:
-                cart[product_id_str] -= 1  # Decrease quantity directly
-        else:
-            del cart[product_id_str]  # Remove product if quantity is 1
+        request.session['cart'] = cart  # Save updated cart
 
-    request.session['cart'] = cart
-    request.session.modified = True  # Explicitly mark session as modified
+        return JsonResponse({
+            'status': 'success',
+            'product_id': product_id,
+            'product_quantity': cart.get(product_key, {}).get('quantity', 0),  # Get updated quantity
+            'product_price': Product.objects.get(id=product_id).price if product_key in cart else 0,
+            'cart_total': sum(item['quantity'] for item in cart.values()),
+            'cart_total_price': sum(item['quantity'] * item['price'] for item in cart.values())
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Item not in cart'}, status=400)
 
-    return redirect('cart_view')
+
+
+
 
 @csrf_exempt
 def cart_view(request):
@@ -1533,6 +1567,9 @@ class CustomPasswordResetCompleteView(auth_views.PasswordResetCompleteView):
 
 
 # In case you want a custom password reset form, here is an example:
+
+@csrf_exempt
+@staff_member_required
 def custom_password_reset_form(request):
     if request.method == 'POST':
         form = PasswordResetForm(request.POST)
@@ -1555,6 +1592,9 @@ def custom_password_reset_form(request):
     return render(request, 'registration/password_reset_form.html', {'form': form})
 
 # List all advertisements
+
+@csrf_exempt
+@staff_member_required
 def advertisement_list(request):
     advertisements = Advertisement.objects.all().order_by('-start_date')
     return render(request, 'admin/advertisement_list.html', {'advertisements': advertisements})
@@ -1562,6 +1602,9 @@ def advertisement_list(request):
 
 
 # Create a new advertisement
+
+@csrf_exempt
+@staff_member_required
 def create_advertisement(request):
     if request.method == 'POST':
         form = AdvertisementForm(request.POST, request.FILES)
@@ -1574,6 +1617,9 @@ def create_advertisement(request):
     return render(request, 'admin/advertisement_form.html', {'form': form})
 
 # Edit an existing advertisement
+
+@csrf_exempt
+@staff_member_required
 def edit_advertisement(request, pk):
     advertisement = get_object_or_404(Advertisement, pk=pk)
     if request.method == 'POST':
@@ -1587,6 +1633,9 @@ def edit_advertisement(request, pk):
     return render(request, 'admin/advertisement_form.html', {'form': form})
 
 # Delete an advertisement
+
+@csrf_exempt
+@staff_member_required
 def delete_advertisement(request, pk):
     advertisement = get_object_or_404(Advertisement, pk=pk)
     advertisement.delete()
@@ -1598,12 +1647,16 @@ def delete_advertisement(request, pk):
 from .models import Notification
 
 # List all notifications
+
+@csrf_exempt
+@staff_member_required
 def notification_list(request):
     notifications = Notification.objects.all().order_by('-created_at')
     return render(request, 'admin/notification_list.html', {'notifications': notifications})
 
 
-
+@csrf_exempt
+@staff_member_required
 def create_notification(request):
     if request.method == 'POST':
         form = NotificationForm(request.POST)
@@ -1631,6 +1684,8 @@ def create_notification(request):
     return render(request, 'admin/notification_form.html', {'form': form})
 
 
+@csrf_exempt
+@staff_member_required
 def edit_notification(request, pk):
     notification = get_object_or_404(Notification, pk=pk)  # Get the notification to edit
 
@@ -1670,6 +1725,9 @@ def edit_notification(request, pk):
 
 
 # Delete a notification
+
+@csrf_exempt
+@staff_member_required
 def delete_notification(request, pk):
     notification = get_object_or_404(Notification, pk=pk)
     notification.delete()
@@ -1678,6 +1736,9 @@ def delete_notification(request, pk):
 
 
 # Bulk delete notifications
+
+@csrf_exempt
+@staff_member_required
 def delete_selected_notifications(request):
     if request.method == "POST":
         notification_ids = request.POST.getlist('notification_ids')  # Get selected notification IDs
@@ -1695,6 +1756,8 @@ def delete_selected_notifications(request):
 
 
 
+@csrf_exempt
+@staff_member_required
 def manager_order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     return render(request, 'admin/staff/order_detail.html', {'order': order})
@@ -1740,6 +1803,8 @@ def order_manager(request):
 
 
 
+@csrf_exempt
+@staff_member_required
 def manager_dashboard(request):
     # Key Metrics
     total_customers = Customer.objects.count()
@@ -1831,7 +1896,9 @@ def manager_dashboard(request):
 
 
 
+
 @csrf_exempt
+@staff_member_required
 def manager_delete_order(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     order.delete()
@@ -1839,8 +1906,8 @@ def manager_delete_order(request, order_id):
     return redirect('orders_management')
 
 
-# Approve Payment View
 @csrf_exempt
+@staff_member_required
 def manager_approve_payment(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     if order.payment_status == 'Pending':  # Check if the payment is still pending
@@ -1852,7 +1919,9 @@ def manager_approve_payment(request, order_id):
 
 
 
+
 @csrf_exempt
+@staff_member_required
 def manager_confirm_delivery(request, order_id):
     # Fetch the order using the provided order_id
     order = get_object_or_404(Order, id=order_id)
@@ -1870,7 +1939,9 @@ def manager_confirm_delivery(request, order_id):
 
 
 
+
 @csrf_exempt
+@staff_member_required
 def manager_sold_products_list(request):
 
     products = Product.objects.all().annotate(
@@ -1878,7 +1949,9 @@ def manager_sold_products_list(request):
     )
     return render(request, 'admin/staff/sold_products_list.html', {'products': products})
 
+
 @csrf_exempt
+@staff_member_required
 def manager_all_customers(request):
     # Fetch all customers ordered by the most recent registration date
     customers = Customer.objects.all().order_by('-user__date_joined')  # Ordering by the related User's join date
@@ -1888,7 +1961,9 @@ def manager_all_customers(request):
 
 
 
+
 @csrf_exempt
+@staff_member_required
 def manager_customer_contributions(request):
     # Annotate each customer with their total spending
     customers = Customer.objects.annotate(

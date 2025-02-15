@@ -81,9 +81,13 @@
                         <span id="full-description" style="display: none;">{{ product.description }}</span>
                         <a href="#" id="read-more" class="text-primary">Read More</a>
                     </p>
-                    <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success btn-lg">
-                        <i class="fa fa-cart-plus"></i> Add to Cart
-                    </a>
+                    <!-- Add to Cart Button with Flying Animation -->
+                    <button onclick="addToCart({{ product.id }}, this)" class="btn btn-success btn-sm flex-grow-1 position-relative">
+                        Add to Cart
+                        <!-- Container for Flying Elements -->
+                        <div id="fly-container-{{ product.id }}" class="fly-container"></div>
+                    </button>
+                   
 
                     <!-- Like Button and Count -->
                     <div class="like-section mt-3">
@@ -190,9 +194,12 @@
                             <a href="{% url 'product_detail' related.id %}" class="btn btn-primary btn-sm flex-grow-1 me-1">
                                 <i class="fa fa-eye"></i> View
                             </a>
-                            <a href="{% url 'add_to_cart' related.id %}" class="btn btn-success btn-sm flex-grow-1">
+                            <!-- Add to Cart Button with Flying Animation -->
+                            <button onclick="addToCart({{ related.id }}, this)" class="btn btn-success btn-sm flex-grow-1 position-relative">
                                 <i class="fa fa-cart-plus"></i>+
-                            </a>
+                                <!-- Container for Flying Elements -->
+                                <div id="fly-container-{{ related.id }}" class="fly-container"></div>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -454,6 +461,8 @@
     // Set interval for automatic image transition (every 3 seconds)
     setInterval(transitionImages, 5000);
 </script>
+
+
 <script>
     function toggleLike(productId, isLike) {
         const likeCountSpan = document.getElementById('like-count-' + productId);
@@ -477,4 +486,111 @@
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+
+
+
+
+<script>
+    function toggleLike(productId, isLike) {
+        const likeCountSpan = document.getElementById('like-count-' + productId);
+
+        fetch(`/like_product/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, like: isLike })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                likeCountSpan.textContent = `${data.like_count} Like`;
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
+
+</script>
+
+<script>
+    
+    async function addToCart(productId, button) {
+    try {
+        const response = await fetch(`/add_to_cart/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Update the cart count badge
+            const cartCountElement = document.querySelector('#cartCount');
+            const cartCountMobileElement = document.querySelector('#cartCountMobile');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.cart_total;
+                cartCountMobileElement.textContent = data.cart_total;
+            }
+
+            // Create the flying text element
+            const flyText = document.createElement('div');
+            flyText.classList.add('fly-text');
+            flyText.textContent = `+${data.product_quantity || 1}`; // Show the quantity added
+
+            // Append the flying text to the container
+            const flyContainer = button.querySelector('.fly-container');
+            flyContainer.appendChild(flyText);
+
+            // Remove the flying text after the animation completes
+            setTimeout(() => {
+                flyText.remove();
+            }, 2500); // Match the duration of the animation
+        } else {
+            // Show error message (optional)
+            alert(data.message); // Replace with a toast or modal for better UX
+        }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('An error occurred while adding the product to the cart. Please try again.');
+    }
+}
+
+</script>
+
+
+
+ 
+<style>
+  @keyframes fly {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.fly-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.fly-text {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: green;
+    animation: fly 1.8s ease-out forwards;
+}
+
+
+</style>
 {% endblock %}
